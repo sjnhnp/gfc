@@ -115,6 +115,16 @@ export const restoreProfile = (
     } else if (Object.hasOwnProperty.call(profile.advancedConfig, field)) {
       ; (profile.advancedConfig as any)[field] = value
     } else if (field === 'dns') {
+      if (value['fake-ip-filter']) {
+        value['fake-ip-filter'] = value['fake-ip-filter'].flatMap((v: string) =>
+          v.startsWith('rule-set:')
+            ? v
+              .substring(9)
+              .split(',')
+              .map((x) => `rule-set:${x}`)
+            : [v],
+        )
+      }
       profile.dnsConfig = deepAssign(profile.dnsConfig, value)
     } else if (field === 'tun') {
       profile.tunConfig = deepAssign(profile.tunConfig, value)

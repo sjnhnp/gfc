@@ -138,7 +138,7 @@ jobs:
                echo "TAG_NAME=$INPUT_VER" >> $GITHUB_ENV
             else
                # Get latest tag, assume format vX.Y.Z, increment Z
-               LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+               LATEST_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 2>/dev/null || echo "v0.0.0")
                # Remove v, split by dot
                VERSION_NO_V=${LATEST_TAG#v}
                IFS='.' read -r -a PARTS <<< "$VERSION_NO_V"

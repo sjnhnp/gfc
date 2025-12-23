@@ -252,7 +252,9 @@ const generateRuleProviders = async (
       }
     })
 
-  const l1 = dns['fake-ip-filter'].flatMap((v) => (v.startsWith('rule-set:') ? v.substring(9) : []))
+  const l1 = dns['fake-ip-filter'].flatMap((v) =>
+    v.startsWith('rule-set:') ? v.substring(9).split(',') : [],
+  )
   const l2 = Object.keys(dns['nameserver-policy']).flatMap((key) =>
     key.startsWith('rule-set:') ? key.substring(9).split(',') : [],
   )
@@ -321,6 +323,17 @@ export const generateConfig = async (originalProfile: ProfileType) => {
       config.dns['nameserver-policy'][key] = _value.length === 1 ? _value[0] : _value
     }
   })
+
+  if (config.dns['fake-ip-filter']) {
+    config.dns['fake-ip-filter'] = config.dns['fake-ip-filter'].flatMap((v: string) =>
+      v.startsWith('rule-set:')
+        ? v
+          .substring(9)
+          .split(',')
+          .map((x) => `rule-set:${x}`)
+        : [v],
+    )
+  }
 
   config['proxy-providers'] = await generateProxyProviders(profile.proxyGroupsConfig)
 
