@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.17.1). Leave empty to auto-increment patch version.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -113,62 +119,51 @@ jobs:
           name: macos-builds
           path: build/bin/*.zip
 
-  Build-Linux:
-    needs: Build-Frontend
+  Release:
+    needs: [Build-Windows, Build-macOS]
     runs-on: ubuntu-latest
-    env:
-      APP_NAME: GUI.for.Clash
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
-          check-latest: true
-      - run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-      - uses: actions/download-artifact@v4
-        with:
-          name: frontend-dist
-          path: frontend/dist
-      - run: |
-          sudo apt-get update
-          sudo apt-get install libgtk-3-dev libwebkit2gtk-4.1-dev
-
-      - name: Build & Pack Linux
+          fetch-depth: 0
+      
+      - name: Determine Version
+        id: version
         run: |
-          build_and_pack() {
-            arch=$1
-            export GOOS=linux GOARCH=$arch
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            INPUT_VER="${{ github.event.inputs.version }}"
+            if [ ! -z "$INPUT_VER" ]; then
+               echo "TAG_NAME=$INPUT_VER" >> $GITHUB_ENV
+            else
+               # Get latest tag, assume format vX.Y.Z, increment Z
+               LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+               # Remove v, split by dot
+               VERSION_NO_V=${LATEST_TAG#v}
+               IFS='.' read -r -a PARTS <<< "$VERSION_NO_V"
+               MAJOR=${PARTS[0]}
+               MINOR=${PARTS[1]}
+               PATCH=${PARTS[2]}
+               NEW_PATCH=$((PATCH + 1))
+               NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
+               echo "Auto-incremented version to $NEW_TAG"
+               echo "TAG_NAME=$NEW_TAG" >> $GITHUB_ENV
+            fi
+          fi
 
-            echo "==> Building Linux $arch..."
-            ~/go/bin/wails build -m -s -trimpath -skipbindings -devtools -tags webkit2_41 -o $APP_NAME.exe
-
-            cd build/bin
-            mv $APP_NAME.exe $APP_NAME
-            zip $APP_NAME-linux-$arch.zip $APP_NAME
-            cd ../..
-          }
-
-          build_and_pack amd64
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux-builds
-          path: build/bin/*.zip
-
-  Release:
-    needs: [Build-Windows, Build-macOS, Build-Linux]
-    runs-on: ubuntu-latest
-    steps:
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
+      
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          tag_name: ${{ env.TAG_NAME }}
+          name: ${{ env.TAG_NAME }}
           files: release-assets/**/*.zip
           draft: false
           prerelease: false
           body: |
+            Release ${{ env.TAG_NAME }}
             Auto-generated release from GitHub Actions.
