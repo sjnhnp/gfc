@@ -111,9 +111,9 @@ export const restoreProfile = (
 
   Object.entries(config).forEach(([field, value]) => {
     if (Object.hasOwnProperty.call(profile.generalConfig, field)) {
-      ;(profile.generalConfig as any)[field] = value
+      ; (profile.generalConfig as any)[field] = value
     } else if (Object.hasOwnProperty.call(profile.advancedConfig, field)) {
-      ;(profile.advancedConfig as any)[field] = value
+      ; (profile.advancedConfig as any)[field] = value
     } else if (field === 'dns') {
       profile.dnsConfig = deepAssign(profile.dnsConfig, value)
     } else if (field === 'tun') {
@@ -128,9 +128,33 @@ export const restoreProfile = (
       })
     } else if (field === 'rules') {
       config[field].forEach((rule: string, index: number) => {
-        const [type = '', payload = '', proxy = '', noResolve] = rule.split(',')
+        let qs = rule
+        let noResolve = false
 
-        const _proxy = type === RuleType.Match ? getRuleProxy(payload) : getRuleProxy(proxy)
+        if (qs.toLowerCase().endsWith('no-resolve')) {
+          noResolve = true
+          qs = qs.substring(0, qs.lastIndexOf(','))
+        }
+
+        const lastComma = qs.lastIndexOf(',')
+        const payloadAndType = qs.substring(0, lastComma)
+        const proxy = qs.substring(lastComma + 1)
+
+        const parts = payloadAndType.split(',')
+        let type = parts[0]
+        let payload = parts.slice(1).join(',')
+
+        // Handle logical/complex rules (AND, OR, NOT, etc)
+        const upperType = type.toUpperCase()
+        if (
+          ['AND', 'OR', 'NOT', 'SUB-RULE'].includes(upperType) ||
+          payloadAndType.includes('((')
+        ) {
+          type = RuleType.Logic
+          payload = payloadAndType
+        }
+
+        const _proxy = type === RuleType.Match ? getRuleProxy(payloadAndType) : getRuleProxy(proxy)
 
         // Skip invalid rules：proxy missing
         if (!_proxy) {

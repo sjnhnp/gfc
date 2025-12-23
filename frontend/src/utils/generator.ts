@@ -311,8 +311,12 @@ export const generateConfig = async (originalProfile: ProfileType) => {
   }
 
   Object.entries(config.dns['nameserver-policy']).forEach(([key, value]: any) => {
-    const _value = value.split(',')
-    config.dns['nameserver-policy'][key] = _value.length === 1 ? _value[0] : _value
+    if (Array.isArray(value)) {
+      config.dns['nameserver-policy'][key] = value.length === 1 ? value[0] : value
+    } else if (typeof value === 'string') {
+      const _value = value.split(',')
+      config.dns['nameserver-policy'][key] = _value.length === 1 ? _value[0] : _value
+    }
   })
 
   config['proxy-providers'] = await generateProxyProviders(profile.proxyGroupsConfig)
@@ -329,16 +333,26 @@ export const generateConfig = async (originalProfile: ProfileType) => {
     generateProxyGroup(proxyGruoup, profile.proxyGroupsConfig),
   )
 
-  config['rules'] = profile.rulesConfig
-    .filter(({ type, enable }) => {
-      if (type === RuleType.InsertionPoint || !enable) {
-        return false
-      }
-      return (
-        profile.advancedConfig['geodata-mode'] || ![RuleType.Geosite, RuleType.Geoip].includes(type)
-      )
-    })
-    .map((rule) => generateRule(rule, profile.proxyGroupsConfig))
+  const subscribesStore = useSubscribesStore()
+  // Only inject rules from subscriptions NOT using internal restore logic
+  // If useInternal is true, rules are already in profile.rulesConfig
+  const subRules = subscribesStore.subscribes
+    .filter((s) => !s.disabled && !s.useInternal && s.rules && s.rules.length > 0)
+    .flatMap((s) => s.rules)
+
+  config['rules'] = [
+    ...subRules,
+    ...profile.rulesConfig
+      .filter(({ type, enable }) => {
+        if (type === RuleType.InsertionPoint || !enable) {
+          return false
+        }
+        return (
+          profile.advancedConfig['geodata-mode'] || ![RuleType.Geosite, RuleType.Geoip].includes(type)
+        )
+      })
+      .map((rule) => generateRule(rule, profile.proxyGroupsConfig)),
+  ]
 
   // step 2
   const pluginsStore = usePluginsStore()

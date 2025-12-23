@@ -189,6 +189,7 @@ export interface Subscription {
     response: Recordable
   }
   script: string
+  rules?: string[]
   // Not Config
   updating?: boolean
 }

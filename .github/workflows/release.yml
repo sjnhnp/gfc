@@ -11,7 +11,6 @@ permissions:
 jobs:
   Build-Frontend:
     runs-on: ubuntu-latest
-    if: github.repository == 'GUI-for-Cores/GUI.for.Clash'
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

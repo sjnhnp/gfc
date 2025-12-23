@@ -105,7 +105,7 @@ export const useSubscribesStore = defineStore('subscribes', () => {
       })
       Object.assign(h, s.header.response)
       if (h['Subscription-Userinfo']) {
-        ;(h['Subscription-Userinfo'] as string).split(/\s*;\s*/).forEach((part) => {
+        ; (h['Subscription-Userinfo'] as string).split(/\s*;\s*/).forEach((part) => {
           const [key, value] = part.split('=') as [string, string]
           userInfo[key] = parseInt(value) || 0
         })
@@ -124,6 +124,7 @@ export const useSubscribesStore = defineStore('subscribes', () => {
       proxies = config.proxies
       haveRules = !!config.rules
       if (haveRules) {
+        s.rules = config.rules
         proxies.forEach((proxy, index) => {
           proxy.__tmp__id__ = index
           NameIdMap[proxy.name] = proxy.__tmp__id__
