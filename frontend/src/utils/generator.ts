@@ -370,6 +370,10 @@ export const generateConfig = async (originalProfile: ProfileType) => {
       .map((rule) => generateRule(rule, profile.proxyGroupsConfig)),
   ]
 
+  if (profile.subRulesConfig && Object.keys(profile.subRulesConfig).length > 0) {
+    config['sub-rules'] = profile.subRulesConfig
+  }
+
   // step 2
   const pluginsStore = usePluginsStore()
   const _config = await pluginsStore.onGenerateTrigger(config, originalProfile)

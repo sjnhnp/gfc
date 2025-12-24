@@ -142,6 +142,7 @@ export type ProfileType = {
   scriptConfig: {
     code: string
   }
+  subRulesConfig: Record<string, string[]>
 }
 
 export const useProfilesStore = defineStore('profiles', () => {
@@ -215,6 +216,7 @@ export const useProfilesStore = defineStore('profiles', () => {
       rulesConfig: Defaults.RulesConfigDefaults(ids),
       mixinConfig: Defaults.MixinConfigDefaults(),
       scriptConfig: Defaults.ScriptConfigDefaults(),
+      subRulesConfig: Defaults.SubRulesConfigDefaults(),
     }
   }
 
