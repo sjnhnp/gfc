@@ -137,6 +137,8 @@ const handleUseRuleset = (ruleset: RuleSet) => {
 
 const hasLost = (r: ProfileType['rulesConfig'][0]) => {
   if (BuiltInOutbound.includes(r.proxy)) return false
+  // For SUB-RULE type Logic rules, the proxy field contains the sub-rule name, not a proxy group
+  if (r.type === RuleType.Logic && /^SUB-RULE,/i.test(r.payload)) return false
   return !props.profile.proxyGroupsConfig.find((v) => v.id === r.proxy)
 }
 
