@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
         with:
           version: latest
@@ -27,10 +29,32 @@ jobs:
           node-version: "latest"
           cache: "pnpm"
           cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Get Version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            INPUT_VER="${{ github.event.inputs.version }}"
+            if [ ! -z "$INPUT_VER" ]; then
+              echo "VERSION=$INPUT_VER" >> $GITHUB_ENV
+            else
+              LATEST_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 2>/dev/null || echo "v0.0.0")
+              VERSION_NO_V=${LATEST_TAG#v}
+              IFS='.' read -r -a PARTS <<< "$VERSION_NO_V"
+              MAJOR=${PARTS[0]}
+              MINOR=${PARTS[1]}
+              PATCH=${PARTS[2]}
+              NEW_PATCH=$((PATCH + 1))
+              NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
+              echo "VERSION=$NEW_TAG" >> $GITHUB_ENV
+            fi
+          fi
+
       - run: |
           cd frontend
           pnpm install --frozen-lockfile
-          pnpm build-only
+          VITE_APP_VERSION=${{ env.VERSION }} pnpm build-only
       - uses: actions/upload-artifact@v4
         with:
           name: frontend-dist

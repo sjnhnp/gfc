@@ -29,7 +29,10 @@ jobs:
       - name: Install dependencies
         run: cd frontend && pnpm install --frozen-lockfile
       - name: Build Frontend
-        run: cd frontend && pnpm build-only
+        run: |
+          cd frontend
+          export VITE_APP_VERSION="Rolling-$(git rev-parse --short HEAD)"
+          pnpm build-only
       - name: Create a compressed file
         run: |
           git rev-parse --short HEAD | tr -d '\n' > frontend/dist/version.txt
