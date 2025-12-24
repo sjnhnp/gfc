@@ -87,7 +87,7 @@ jobs:
             $env:GOOS="windows"
             $env:GOARCH=$arch
 
-            $ldflags = "-X 'github.com/GUI-for-Cores/GUI.for.Clash/bridge.Version=$env:VERSION'"
+            $ldflags = "-X 'guiforcores/bridge.Version=$env:VERSION'"
             Write-Host "==> Building Windows $arch with version $env:VERSION..."
             ~/go/bin/wails build -m -s -trimpath -skipbindings -devtools -tags webkit2_41 -ldflags $ldflags -o "$env:APP_NAME.exe"
 
@@ -159,7 +159,7 @@ jobs:
             arch=$1
             export GOOS=darwin GOARCH=$arch
 
-            LDFLAGS="-X 'github.com/GUI-for-Cores/GUI.for.Clash/bridge.Version=$VERSION'"
+            LDFLAGS="-X 'guiforcores/bridge.Version=$VERSION'"
             echo "==> Building macOS $arch with version $VERSION..."
             ~/go/bin/wails build -m -s -trimpath -skipbindings -devtools -tags webkit2_41 -ldflags "$LDFLAGS" -o $APP_NAME.exe
 

@@ -20,7 +20,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Version can be set at build time via -ldflags "-X 'github.com/GUI-for-Cores/GUI.for.Clash/bridge.Version=vX.Y.Z'"
+// Version can be set at build time via -ldflags "-X 'guiforcores/bridge.Version=vX.Y.Z'"
 var Version = "v1.16.0"
 
 var Config = &AppConfig{}

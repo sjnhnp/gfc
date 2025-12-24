@@ -143,7 +143,7 @@ var Env = &EnvResult{
     }
 
 # 构建时注入版本号
-$ldflags = "-X 'github.com/GUI-for-Cores/GUI.for.Clash/bridge.Version=$env:VERSION'"
+$ldflags = "-X 'guiforcores/bridge.Version=$env:VERSION'"
 ~/go/bin/wails build -ldflags $ldflags ...
 ```
 
@@ -159,7 +159,7 @@ $ldflags = "-X 'github.com/GUI-for-Cores/GUI.for.Clash/bridge.Version=$env:VERSI
     fi
 
 # 构建时注入版本号
-LDFLAGS="-X 'github.com/GUI-for-Cores/GUI.for.Clash/bridge.Version=$VERSION'"
+LDFLAGS="-X 'guiforcores/bridge.Version=$VERSION'"
 ~/go/bin/wails build -ldflags "$LDFLAGS" ...
 ```
 
