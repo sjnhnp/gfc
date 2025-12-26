@@ -212,10 +212,17 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "push" ]; then
             echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "TAG_EXISTS=true" >> $GITHUB_ENV
           else
             INPUT_VER="${{ github.event.inputs.version }}"
             if [ ! -z "$INPUT_VER" ]; then
                echo "TAG_NAME=$INPUT_VER" >> $GITHUB_ENV
+               # Check if the manually specified tag already exists
+               if git rev-parse "$INPUT_VER" >/dev/null 2>&1; then
+                 echo "TAG_EXISTS=true" >> $GITHUB_ENV
+               else
+                 echo "TAG_EXISTS=false" >> $GITHUB_ENV
+               fi
             else
                # Get latest tag, assume format vX.Y.Z, increment Z
                LATEST_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 2>/dev/null || echo "v0.0.0")
@@ -229,8 +236,18 @@ jobs:
                NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
                echo "Auto-incremented version to $NEW_TAG"
                echo "TAG_NAME=$NEW_TAG" >> $GITHUB_ENV
+               echo "TAG_EXISTS=false" >> $GITHUB_ENV
             fi
           fi
+
+      - name: Create and Push Tag
+        if: env.TAG_EXISTS == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ env.TAG_NAME }}" -m "Release ${{ env.TAG_NAME }}"
+          git push origin "${{ env.TAG_NAME }}"
+          echo "Created and pushed new tag: ${{ env.TAG_NAME }}"
 
       - uses: actions/download-artifact@v4
         with:
