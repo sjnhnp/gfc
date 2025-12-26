@@ -19,9 +19,12 @@ import {
   CheckPermissions,
   SwitchPermissions,
 } from '@/utils'
+import { exportAllConfigs, importAllConfigs } from '@/utils/config-io'
 
 const isAdmin = ref(false)
 const isTaskScheduled = ref(false)
+const exportLoading = ref(false)
+const importLoading = ref(false)
 
 const { t } = useI18n()
 const appSettings = useAppSettingsStore()
@@ -175,6 +178,32 @@ if (envStore.env.os === 'windows') {
   CheckPermissions().then((admin) => {
     isAdmin.value = admin
   })
+}
+
+const handleExportConfig = async () => {
+  exportLoading.value = true
+  try {
+    const success = await exportAllConfigs()
+    if (success) {
+      message.success('common.success')
+    }
+  } catch (error: any) {
+    message.error(error.message || error)
+  }
+  exportLoading.value = false
+}
+
+const handleImportConfig = async () => {
+  importLoading.value = true
+  try {
+    const success = await importAllConfigs({ merge: false })
+    if (success) {
+      message.success('common.success')
+    }
+  } catch (error: any) {
+    message.error(error.message || error)
+  }
+  importLoading.value = false
 }
 </script>
 
@@ -397,6 +426,17 @@ if (envStore.env.os === 'windows') {
             />
           </template>
         </Input>
+      </div>
+      <div class="px-8 py-12 flex items-center justify-between">
+        <div class="text-16 font-bold">{{ t('settings.configBackup.name') }}</div>
+        <div class="flex gap-8">
+          <Button @click="handleExportConfig" :loading="exportLoading" type="primary" icon="export">
+            <span class="ml-8">{{ t('settings.configBackup.export') }}</span>
+          </Button>
+          <Button @click="handleImportConfig" :loading="importLoading" type="normal" icon="import">
+            <span class="ml-8">{{ t('settings.configBackup.import') }}</span>
+          </Button>
+        </div>
       </div>
     </Card>
 

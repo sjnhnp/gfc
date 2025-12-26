@@ -356,6 +356,9 @@ export default {
     name: 'Name',
     url: 'Remote Url',
     localPath: 'Local Path',
+    localPathPlaceholder: 'Select or enter local yaml file path',
+    selectFile: 'Select File',
+    selectLocalFile: 'Select Local Config File',
     website: 'Website',
     path: 'Save Path',
     include: 'Include Keywords',
@@ -660,6 +663,14 @@ export default {
     githubapi: {
       name: 'Authenticating to the REST API',
       tips: 'Provides a higher rate limit',
+    },
+    configBackup: {
+      name: 'Config Backup',
+      export: 'Export',
+      import: 'Import',
+      exportSuccess: 'Configuration exported successfully',
+      importSuccess: 'Configuration imported successfully',
+      importWarning: 'Import will overwrite existing configuration. Continue?',
     },
   },
   about: {

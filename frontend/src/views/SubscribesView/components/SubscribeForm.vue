@@ -2,10 +2,11 @@
 import { ref, inject, computed, h } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { OpenFileDialog, CopyFile } from '@/bridge'
 import { RequestMethodOptions } from '@/constant/app'
 import { useBool } from '@/hooks'
 import { useSubscribesStore } from '@/stores'
-import { deepClone, message } from '@/utils'
+import { deepClone, message, sampleID } from '@/utils'
 
 import Button from '@/components/Button/index.vue'
 
@@ -26,6 +27,27 @@ const sub = ref<Subscription>(subscribeStore.getSubscribeTemplate())
 
 const isManual = computed(() => sub.value.type === 'Manual')
 const isRemote = computed(() => sub.value.type === 'Http')
+const isLocalFile = computed(() => sub.value.type === 'File')
+
+// Handle selecting a local YAML file
+const handleSelectFile = async () => {
+  try {
+    const filePath = await OpenFileDialog(
+      t('subscribe.selectLocalFile'),
+      'YAML Files:*.yaml;*.yml|All Files:*.*'
+    )
+    if (filePath) {
+      sub.value.url = filePath
+      // Auto-fill name if empty
+      if (!sub.value.name) {
+        const fileName = filePath.split('/').pop() || filePath.split('\\').pop() || ''
+        sub.value.name = fileName.replace(/\.(yaml|yml)$/i, '')
+      }
+    }
+  } catch (error: any) {
+    message.error(error)
+  }
+}
 
 const handleCancel = inject('cancel') as any
 const handleSubmit = inject('submit') as any
@@ -108,12 +130,15 @@ defineExpose({ modalSlots })
     </div>
     <div v-if="!isManual" class="form-item">
       {{ t(isRemote ? 'subscribe.url' : 'subscribe.localPath') }} *
-      <div class="min-w-[75%]">
+      <div class="min-w-[75%] flex gap-2">
         <Input
           v-model="sub.url"
-          :placeholder="isRemote ? 'http(s)://' : 'data/local/{filename}.txt'"
-          class="w-full"
+          :placeholder="isRemote ? 'http(s)://' : t('subscribe.localPathPlaceholder')"
+          class="flex-1"
         />
+        <Button v-if="isLocalFile" @click="handleSelectFile" type="primary" size="small">
+          {{ t('subscribe.selectFile') }}
+        </Button>
       </div>
     </div>
     <div class="form-item">

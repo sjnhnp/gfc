@@ -355,6 +355,9 @@ export default {
     name: '名称',
     url: '远程链接',
     localPath: '本地路径',
+    localPathPlaceholder: '选择或输入本地yaml文件路径',
+    selectFile: '选择文件',
+    selectLocalFile: '选择本地配置文件',
     website: '官网',
     path: '保存路径',
     include: '包括名称',
@@ -659,6 +662,14 @@ export default {
     githubapi: {
       name: '向 REST API 进行身份验证',
       tips: '拥有更高的速率限制',
+    },
+    configBackup: {
+      name: '配置备份',
+      export: '导出配置',
+      import: '导入配置',
+      exportSuccess: '配置导出成功',
+      importSuccess: '配置导入成功',
+      importWarning: '导入将覆盖现有配置，确定继续吗？',
     },
   },
   about: {

@@ -121,3 +121,43 @@ export const UnzipTarGZFile = async (path: string, output: string) => {
   }
   return data
 }
+
+// File dialog functions
+export const OpenFileDialog = async (title: string, filters: string = '') => {
+  const { flag, data } = await App.OpenFileDialog(title, filters)
+  if (!flag) {
+    if (data === 'cancelled') {
+      return null // User cancelled the dialog
+    }
+    throw data
+  }
+  return data
+}
+
+export const SaveFileDialog = async (title: string, defaultFilename: string, filters: string = '') => {
+  const { flag, data } = await App.SaveFileDialog(title, defaultFilename, filters)
+  if (!flag) {
+    if (data === 'cancelled') {
+      return null // User cancelled the dialog
+    }
+    throw data
+  }
+  return data
+}
+
+// External file operations (for files outside the app's data directory)
+export const ReadExternalFile = async (path: string) => {
+  const { flag, data } = await App.ReadExternalFile(path)
+  if (!flag) {
+    throw data
+  }
+  return data
+}
+
+export const WriteExternalFile = async (path: string, content: string) => {
+  const { flag, data } = await App.WriteExternalFile(path, content)
+  if (!flag) {
+    throw data
+  }
+  return data
+}
