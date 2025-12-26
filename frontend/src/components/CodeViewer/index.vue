@@ -167,7 +167,7 @@ const initEditor = () => {
       ? [{ javascript, json, yaml }[props.lang]()]
       : []),
     EditorView.updateListener.of((update) => {
-      if (update.docChanged && !update.view.composing) {
+      if (update.docChanged) {
         onChange(update.state.doc.toString())
       }
     }),
