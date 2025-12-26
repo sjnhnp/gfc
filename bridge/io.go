@@ -1,4 +1,4 @@
-package bridge
+  package bridge
 
 import (
 	"archive/tar"
@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/pkg/browser"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 const (
@@ -356,4 +357,104 @@ func (a *App) FileExists(path string) FlagResult {
 	}
 
 	return FlagResult{false, err.Error()}
+}
+
+// OpenFileDialog opens a file selection dialog and returns the selected file path
+func (a *App) OpenFileDialog(title string, filters string) FlagResult {
+	log.Printf("OpenFileDialog: %s, filters: %s", title, filters)
+
+	// Parse filters: "YAML Files:*.yaml,*.yml|JSON Files:*.json"
+	var dialogFilters []runtime.FileFilter
+	if filters != "" {
+		filterPairs := strings.Split(filters, "|")
+		for _, pair := range filterPairs {
+			parts := strings.Split(pair, ":")
+			if len(parts) == 2 {
+				dialogFilters = append(dialogFilters, runtime.FileFilter{
+					DisplayName: parts[0],
+					Pattern:     parts[1],
+				})
+			}
+		}
+	}
+
+	opts := runtime.OpenDialogOptions{
+		Title:   title,
+		Filters: dialogFilters,
+	}
+
+	selectedFile, err := runtime.OpenFileDialog(a.Ctx, opts)
+	if err != nil {
+		return FlagResult{false, err.Error()}
+	}
+
+	if selectedFile == "" {
+		return FlagResult{false, "cancelled"}
+	}
+
+	return FlagResult{true, filepath.ToSlash(selectedFile)}
+}
+
+// SaveFileDialog opens a save file dialog and returns the selected file path
+func (a *App) SaveFileDialog(title string, defaultFilename string, filters string) FlagResult {
+	log.Printf("SaveFileDialog: %s, default: %s, filters: %s", title, defaultFilename, filters)
+
+	// Parse filters: "JSON Files:*.json|All Files:*.*"
+	var dialogFilters []runtime.FileFilter
+	if filters != "" {
+		filterPairs := strings.Split(filters, "|")
+		for _, pair := range filterPairs {
+			parts := strings.Split(pair, ":")
+			if len(parts) == 2 {
+				dialogFilters = append(dialogFilters, runtime.FileFilter{
+					DisplayName: parts[0],
+					Pattern:     parts[1],
+				})
+			}
+		}
+	}
+
+	opts := runtime.SaveDialogOptions{
+		Title:           title,
+		DefaultFilename: defaultFilename,
+		Filters:         dialogFilters,
+	}
+
+	selectedFile, err := runtime.SaveFileDialog(a.Ctx, opts)
+	if err != nil {
+		return FlagResult{false, err.Error()}
+	}
+
+	if selectedFile == "" {
+		return FlagResult{false, "cancelled"}
+	}
+
+	return FlagResult{true, filepath.ToSlash(selectedFile)}
+}
+
+// ReadExternalFile reads a file from an absolute path (outside the app's data directory)
+func (a *App) ReadExternalFile(path string) FlagResult {
+	log.Printf("ReadExternalFile: %s", path)
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return FlagResult{false, err.Error()}
+	}
+
+	return FlagResult{true, string(data)}
+}
+
+// WriteExternalFile writes content to an absolute path (outside the app's data directory)
+func (a *App) WriteExternalFile(path string, content string) FlagResult {
+	log.Printf("WriteExternalFile: %s", path)
+
+	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
+		return FlagResult{false, err.Error()}
+	}
+
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		return FlagResult{false, err.Error()}
+	}
+
+	return FlagResult{true, "Success"}
 }
