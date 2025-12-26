@@ -39,14 +39,14 @@ jobs:
             if [ ! -z "$INPUT_VER" ]; then
               echo "VERSION=$INPUT_VER" >> $GITHUB_ENV
             else
-              # Get the highest version tag by sorting all tags
-              LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
+              # Get the highest version tag by sorting all tags (with or without v prefix)
+              # First, get all version-like tags and normalize them
+              LATEST_TAG=$(git tag -l | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | sort -V | tail -n 1)
               if [ -z "$LATEST_TAG" ]; then
-                LATEST_TAG="v0.0.0"
+                LATEST_TAG="0.0.0"
               fi
-              echo "Found latest tag: $LATEST_TAG"
-              VERSION_NO_V=${LATEST_TAG#v}
-              IFS='.' read -r -a PARTS <<< "$VERSION_NO_V"
+              echo "Found latest version: $LATEST_TAG"
+              IFS='.' read -r -a PARTS <<< "$LATEST_TAG"
               MAJOR=${PARTS[0]}
               MINOR=${PARTS[1]}
               PATCH=${PARTS[2]}
@@ -99,19 +99,20 @@ jobs:
             if ($inputVer) {
               "VERSION=$inputVer" | Out-File -FilePath $env:GITHUB_ENV -Append
             } else {
-              # Get the highest version tag by sorting all tags
-              $allTags = git tag -l "v*.*.*" | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' }
+              # Get all version-like tags (with or without v prefix)
+              $allTags = git tag -l | Where-Object { $_ -match '^v?\d+\.\d+\.\d+$' }
               if ($allTags) {
-                $latestTag = $allTags | Sort-Object { [version]($_ -replace '^v', '') } | Select-Object -Last 1
+                # Normalize by removing v prefix and sort
+                $latestVersion = $allTags | ForEach-Object { $_ -replace '^v', '' } | Sort-Object { [version]$_ } | Select-Object -Last 1
               } else {
-                $latestTag = "v0.0.0"
+                $latestVersion = "0.0.0"
               }
-              Write-Host "Found latest tag: $latestTag"
-              $versionParts = $latestTag.Substring(1) -split '\.'
+              Write-Host "Found latest version: $latestVersion"
+              $versionParts = $latestVersion -split '\.'
               $major = $versionParts[0]
               $minor = $versionParts[1]
               $patch = [int]$versionParts[2]
-              # Just increment by 1 from the latest tag - no loop needed since we sorted all tags
+              # Just increment by 1 from the latest version
               $patch++
               $newTag = "v$major.$minor.$patch"
               Write-Host "Auto-incremented version to $newTag"
@@ -179,14 +180,13 @@ jobs:
             if [ ! -z "$INPUT_VER" ]; then
               echo "VERSION=$INPUT_VER" >> $GITHUB_ENV
             else
-              # Get the highest version tag by sorting all tags
-              LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
+              # Get the highest version tag by sorting all tags (with or without v prefix)
+              LATEST_TAG=$(git tag -l | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | sort -V | tail -n 1)
               if [ -z "$LATEST_TAG" ]; then
-                LATEST_TAG="v0.0.0"
+                LATEST_TAG="0.0.0"
               fi
-              echo "Found latest tag: $LATEST_TAG"
-              VERSION_NO_V=${LATEST_TAG#v}
-              IFS='.' read -r -a PARTS <<< "$VERSION_NO_V"
+              echo "Found latest version: $LATEST_TAG"
+              IFS='.' read -r -a PARTS <<< "$LATEST_TAG"
               MAJOR=${PARTS[0]}
               MINOR=${PARTS[1]}
               PATCH=${PARTS[2]}
@@ -245,16 +245,14 @@ jobs:
                  echo "TAG_EXISTS=false" >> $GITHUB_ENV
                fi
             else
-               # Get the highest version tag by sorting all tags
-               LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
+               # Get the highest version tag by sorting all tags (with or without v prefix)
+               LATEST_TAG=$(git tag -l | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | sort -V | tail -n 1)
                if [ -z "$LATEST_TAG" ]; then
-                 LATEST_TAG="v0.0.0"
+                 LATEST_TAG="0.0.0"
                fi
-               echo "Found latest tag: $LATEST_TAG"
+               echo "Found latest version: $LATEST_TAG"
                
-               # Remove v, split by dot
-               VERSION_NO_V=${LATEST_TAG#v}
-               IFS='.' read -r -a PARTS <<< "$VERSION_NO_V"
+               IFS='.' read -r -a PARTS <<< "$LATEST_TAG"
                MAJOR=${PARTS[0]}
                MINOR=${PARTS[1]}
                PATCH=${PARTS[2]}
