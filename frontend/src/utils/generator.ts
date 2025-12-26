@@ -224,8 +224,14 @@ const generateRuleProviders = async (
   const providers: Record<string, any> = {}
 
   function appendLocalProvider(name: string) {
+    console.log(`[DEBUG] appendLocalProvider called with name: "${name}"`)
+    console.log(`[DEBUG] providers[name] exists: ${!!providers[name]}`)
+    console.log(`[DEBUG] mixinRuleProviders[name] exists: ${!!mixinRuleProviders[name]}`)
+    console.log(`[DEBUG] mixinRuleProviders keys:`, Object.keys(mixinRuleProviders).filter(k => k !== '__mixinDns'))
+
     // If already defined in providers (generated or copied), skip
     if (providers[name]) {
+      console.log(`[DEBUG] Skipping "${name}" - already in providers`)
       return
     }
 
@@ -233,11 +239,13 @@ const generateRuleProviders = async (
     // This is needed because mixin is merged later, but mihomo validates
     // rule-set references in fake-ip-filter/nameserver-policy against rule-providers
     if (mixinRuleProviders[name]) {
+      console.log(`[DEBUG] Copying "${name}" from mixin rule-providers`)
       providers[name] = mixinRuleProviders[name]
       return
     }
 
     const ruleset = rulesetsStore.getRulesetById(name) || rulesetsStore.getRulesetByName(name)
+    console.log(`[DEBUG] ruleset found in store: ${!!ruleset}`)
     if (ruleset) {
       if (ruleset.type === 'Http') {
         providers[ruleset.name] = {
@@ -256,6 +264,8 @@ const generateRuleProviders = async (
           format: ruleset.format,
         }
       }
+    } else {
+      console.log(`[DEBUG] WARNING: No provider found for "${name}" - this rule-set reference will be broken!`)
     }
   }
 
@@ -323,8 +333,15 @@ const generateRuleProviders = async (
       : [],
   )
 
+  console.log('[DEBUG] Extracted rule-set references from GUI DNS fake-ip-filter:', l1)
+  console.log('[DEBUG] Extracted rule-set references from GUI DNS nameserver-policy:', l2)
+  console.log('[DEBUG] Extracted rule-set references from mixin DNS fake-ip-filter:', l3)
+  console.log('[DEBUG] Extracted rule-set references from mixin DNS nameserver-policy:', l4)
+  console.log('[DEBUG] All rule-set references to process:', l1.concat(l2, l3, l4))
+
   l1.concat(l2, l3, l4).forEach((name) => appendLocalProvider(name))
 
+  console.log('[DEBUG] Final providers:', JSON.stringify(providers, null, 2))
   return providers
 }
 
