@@ -41,7 +41,7 @@ appStore.checkForUpdates()
           type="link"
           size="small"
         >
-          Bridge: {{ envStore.env.appVersion }} - UI: {{ APP_VERSION }}
+          {{ APP_VERSION }}
         </Button>
         <Button
           v-if="appStore.updatable"
