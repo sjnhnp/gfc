@@ -140,6 +140,25 @@ export const usePluginsStore = defineStore('plugins', () => {
     // Install pre-installed plugins if no plugins exist
     if (plugins.value.length === 0 && PreinstalledPlugins.length > 0) {
       console.log('Installing pre-installed plugins...')
+
+      // First, ensure Plugin-Hub is loaded to avoid "Deprecated" label
+      if (pluginHub.value.length === 0) {
+        try {
+          console.log('Downloading Plugin-Hub list...')
+          const { body: body1 } = await HttpGet<string>(
+            'https://raw.githubusercontent.com/GUI-for-Cores/Plugin-Hub/main/plugins/generic.json',
+          )
+          const { body: body2 } = await HttpGet<string>(
+            'https://raw.githubusercontent.com/GUI-for-Cores/Plugin-Hub/main/plugins/gfc.json',
+          )
+          pluginHub.value = [...JSON.parse(body1), ...JSON.parse(body2)]
+          await WriteFile(PluginHubFilePath, JSON.stringify(pluginHub.value))
+          console.log('Plugin-Hub list downloaded successfully')
+        } catch (hubError) {
+          console.warn('Failed to download Plugin-Hub list:', hubError)
+        }
+      }
+
       for (const prePlugin of PreinstalledPlugins) {
         try {
           // Clone the plugin to avoid modifying the original
