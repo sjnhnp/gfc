@@ -50,17 +50,10 @@ jobs:
               MAJOR=${PARTS[0]}
               MINOR=${PARTS[1]}
               PATCH=${PARTS[2]}
-              # Increment and check if tag exists
-              while true; do
-                NEW_PATCH=$((PATCH + 1))
-                NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
-                if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-                  echo "Tag $NEW_TAG already exists, trying next..."
-                  PATCH=$NEW_PATCH
-                else
-                  break
-                fi
-              done
+              # Just increment by 1 from the latest tag
+              NEW_PATCH=$((PATCH + 1))
+              NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
+              echo "Auto-incremented version to $NEW_TAG"
               echo "VERSION=$NEW_TAG" >> $GITHUB_ENV
             fi
           fi
@@ -118,15 +111,9 @@ jobs:
               $major = $versionParts[0]
               $minor = $versionParts[1]
               $patch = [int]$versionParts[2]
-              # Increment and check if tag exists
-              do {
-                $patch++
-                $newTag = "v$major.$minor.$patch"
-                $tagExists = git rev-parse $newTag 2>$null
-                if ($tagExists) {
-                  Write-Host "Tag $newTag already exists, trying next..."
-                }
-              } while ($tagExists)
+              # Just increment by 1 from the latest tag - no loop needed since we sorted all tags
+              $patch++
+              $newTag = "v$major.$minor.$patch"
               Write-Host "Auto-incremented version to $newTag"
               "VERSION=$newTag" | Out-File -FilePath $env:GITHUB_ENV -Append
             }
@@ -203,17 +190,9 @@ jobs:
               MAJOR=${PARTS[0]}
               MINOR=${PARTS[1]}
               PATCH=${PARTS[2]}
-              # Increment and check if tag exists
-              while true; do
-                NEW_PATCH=$((PATCH + 1))
-                NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
-                if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-                  echo "Tag $NEW_TAG already exists, trying next..."
-                  PATCH=$NEW_PATCH
-                else
-                  break
-                fi
-              done
+              # Just increment by 1 from the latest tag
+              NEW_PATCH=$((PATCH + 1))
+              NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
               echo "Auto-incremented version to $NEW_TAG"
               echo "VERSION=$NEW_TAG" >> $GITHUB_ENV
             fi
@@ -260,14 +239,13 @@ jobs:
             if [ ! -z "$INPUT_VER" ]; then
                echo "TAG_NAME=$INPUT_VER" >> $GITHUB_ENV
                # Check if the manually specified tag already exists
-               if git rev-parse "$INPUT_VER" >/dev/null 2>&1; then
+               if git tag -l "$INPUT_VER" | grep -q "$INPUT_VER"; then
                  echo "TAG_EXISTS=true" >> $GITHUB_ENV
                else
                  echo "TAG_EXISTS=false" >> $GITHUB_ENV
                fi
             else
                # Get the highest version tag by sorting all tags
-               # This ensures we find the actual latest version, not just the one closest to HEAD
                LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
                if [ -z "$LATEST_TAG" ]; then
                  LATEST_TAG="v0.0.0"
@@ -281,17 +259,9 @@ jobs:
                MINOR=${PARTS[1]}
                PATCH=${PARTS[2]}
                
-               # Increment and check if tag exists, keep incrementing if it does
-               while true; do
-                 NEW_PATCH=$((PATCH + 1))
-                 NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
-                 if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
-                   echo "Tag $NEW_TAG already exists, trying next..."
-                   PATCH=$NEW_PATCH
-                 else
-                   break
-                 fi
-               done
+               # Just increment by 1 from the latest tag
+               NEW_PATCH=$((PATCH + 1))
+               NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
                
                echo "Auto-incremented version to $NEW_TAG"
                echo "TAG_NAME=$NEW_TAG" >> $GITHUB_ENV
