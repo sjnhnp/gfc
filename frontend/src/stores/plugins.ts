@@ -20,16 +20,18 @@ import {
 import type { Plugin, Subscription, TrayContent, MenuItem } from '@/types/app'
 
 // Pre-installed plugins configuration
+// Enhanced version: supports backing up local subscription files (data/local/*.txt)
 const PreinstalledPlugins: Plugin[] = [
   {
-    id: 'plugin-sync-configuration-gists',
-    name: '配置同步 - Gists',
-    version: 'v1.0.2',
-    description: '使用Gists同步GUI配置。',
+    // Use a unique ID to avoid being overwritten by Plugin-Hub updates
+    id: 'plugin-sync-gists-enhanced',
+    name: '配置同步 - Gists (增强版)',
+    version: 'v1.1.0',
+    description: '使用Gists同步GUI配置。增强版支持备份本地订阅源文件和本地规则集源文件。',
     tags: ['实用工具', '功能扩展', '提升体验'],
     type: 'Http',
-    url: 'https://raw.githubusercontent.com/GUI-for-Cores/Plugin-Hub/main/plugins/Generic/plugin-sync-configuration-gists.js',
-    path: 'data/plugins/plugin-sync-configuration-gists.js',
+    url: 'https://raw.githubusercontent.com/sjnhnp/gfc/main/frontend/public/plugins/plugin-sync-configuration-gists-enhanced.js',
+    path: 'data/plugins/plugin-sync-gists-enhanced.js',
     triggers: ['on::manual', 'on::ready'] as PluginTrigger[],
     hasUI: false,
     menus: {
@@ -411,6 +413,8 @@ export const usePluginsStore = defineStore('plugins', () => {
   const findPluginInHubById = (id: string) => pluginHub.value.find((v) => v.id === id)
   const isDeprecated = (plugin: Plugin) => {
     if (!plugin.id.startsWith('plugin-')) return false
+    // Exclude pre-installed enhanced plugins from deprecation check
+    if (PreinstalledPlugins.some((p) => p.id === plugin.id)) return false
     return !findPluginInHubById(plugin.id)
   }
   const hasNewPluginVersion = (plugin: Plugin) => {
