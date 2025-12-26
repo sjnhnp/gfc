@@ -21,6 +21,7 @@ import type { Plugin, Subscription, TrayContent, MenuItem } from '@/types/app'
 
 // Pre-installed plugins configuration
 // Enhanced version: supports backing up local subscription files (data/local/*.txt)
+// Plugin files and crypto-js.js are pre-packaged and extracted by Go backend on startup
 const PreinstalledPlugins: Plugin[] = [
   {
     // Use a unique ID to avoid being overwritten by Plugin-Hub updates
@@ -29,8 +30,8 @@ const PreinstalledPlugins: Plugin[] = [
     version: 'v1.1.0',
     description: '使用Gists同步GUI配置。增强版支持备份本地订阅源文件和本地规则集源文件。',
     tags: ['实用工具', '功能扩展', '提升体验'],
-    type: 'Http',
-    url: 'https://raw.githubusercontent.com/sjnhnp/gfc/main/frontend/public/plugins/plugin-sync-configuration-gists-enhanced.js',
+    type: 'File',  // Use local file (pre-packaged)
+    url: 'https://raw.githubusercontent.com/sjnhnp/gfc/main/frontend/public/plugins/plugin-sync-configuration-gists-enhanced.js',  // Fallback URL
     path: 'data/plugins/plugin-sync-gists-enhanced.js',
     triggers: ['on::manual', 'on::ready'] as PluginTrigger[],
     hasUI: false,
@@ -68,7 +69,7 @@ const PreinstalledPlugins: Plugin[] = [
     ],
     disabled: false,
     install: true,
-    installed: false,
+    installed: true,  // Pre-installed with crypto-js.js
   },
 ]
 
@@ -140,52 +141,46 @@ export const usePluginsStore = defineStore('plugins', () => {
     list && (pluginHub.value = JSON.parse(list))
 
     // Install pre-installed plugins if no plugins exist
+    // Note: Plugin files and crypto-js.js are already extracted by the Go backend on startup
     if (plugins.value.length === 0 && PreinstalledPlugins.length > 0) {
-      console.log('Installing pre-installed plugins...')
-
-      // First, ensure Plugin-Hub is loaded to avoid "Deprecated" label
-      if (pluginHub.value.length === 0) {
-        try {
-          console.log('Downloading Plugin-Hub list...')
-          const { body: body1 } = await HttpGet<string>(
-            'https://raw.githubusercontent.com/GUI-for-Cores/Plugin-Hub/main/plugins/generic.json',
-          )
-          const { body: body2 } = await HttpGet<string>(
-            'https://raw.githubusercontent.com/GUI-for-Cores/Plugin-Hub/main/plugins/gfc.json',
-          )
-          pluginHub.value = [...JSON.parse(body1), ...JSON.parse(body2)]
-          await WriteFile(PluginHubFilePath, JSON.stringify(pluginHub.value))
-          console.log('Plugin-Hub list downloaded successfully')
-        } catch (hubError) {
-          console.warn('Failed to download Plugin-Hub list:', hubError)
-        }
-      }
+      console.log('Registering pre-installed plugins...')
 
       for (const prePlugin of PreinstalledPlugins) {
         try {
           // Clone the plugin to avoid modifying the original
           const plugin = deepClone(prePlugin)
-          plugins.value.push(plugin)
 
-          // Download the plugin code
-          if (plugin.type === 'Http' && plugin.url) {
-            const { body } = await HttpGet<string>(plugin.url)
-            await WriteFile(plugin.path, body)
-            PluginsCache[plugin.id] = { plugin, code: body }
-            console.log(`Pre-installed plugin: ${plugin.name}`)
-
-            // For sync-configuration-gists plugin, download crypto-js dependency and mark as installed
-            if (plugin.id === 'plugin-sync-configuration-gists') {
+          // Read the plugin code from local file (already extracted by Go backend)
+          const code = await ignoredError(ReadFile, plugin.path)
+          if (code) {
+            plugin.installed = true // Mark as installed since crypto-js.js is also pre-extracted
+            plugins.value.push(plugin)
+            PluginsCache[plugin.id] = { plugin, code }
+            console.log(`Pre-installed plugin registered: ${plugin.name}`)
+          } else {
+            console.warn(`Plugin file not found: ${plugin.path}, will try HTTP download`)
+            // Fallback: download from URL if local file not found
+            if (plugin.type === 'Http' && plugin.url) {
               try {
+                const { body } = await HttpGet<string>(plugin.url)
+                await WriteFile(plugin.path, body)
+
+                // Also download crypto-js.js
                 const cryptoJsPath = 'data/third/sync-gui-gists/crypto-js.js'
-                const { body: cryptoJs } = await HttpGet<string>(
-                  'https://unpkg.com/crypto-js@latest/crypto-js.js',
-                )
-                await WriteFile(cryptoJsPath, cryptoJs)
+                const cryptoJsExists = await ignoredError(ReadFile, cryptoJsPath)
+                if (!cryptoJsExists) {
+                  const { body: cryptoJs } = await HttpGet<string>(
+                    'https://unpkg.com/crypto-js@latest/crypto-js.js',
+                  )
+                  await WriteFile(cryptoJsPath, cryptoJs)
+                }
+
                 plugin.installed = true
-                console.log('Downloaded crypto-js.js for sync-configuration-gists plugin')
-              } catch (depError) {
-                console.warn('Failed to download crypto-js.js, user will need to install manually', depError)
+                plugins.value.push(plugin)
+                PluginsCache[plugin.id] = { plugin, code: body }
+                console.log(`Pre-installed plugin downloaded: ${plugin.name}`)
+              } catch (downloadError) {
+                console.error(`Failed to download plugin: ${plugin.name}`, downloadError)
               }
             }
           }
@@ -193,9 +188,24 @@ export const usePluginsStore = defineStore('plugins', () => {
           console.error(`Failed to install pre-installed plugin: ${prePlugin.name}`, error)
         }
       }
+
       // Save the plugins list
       if (plugins.value.length > 0) {
         await savePlugins()
+      }
+
+      // Load Plugin-Hub in background (non-blocking) to avoid "Deprecated" label
+      if (pluginHub.value.length === 0) {
+        HttpGet<string>(
+          'https://raw.githubusercontent.com/GUI-for-Cores/Plugin-Hub/main/plugins/generic.json',
+        ).then(async ({ body: body1 }) => {
+          const { body: body2 } = await HttpGet<string>(
+            'https://raw.githubusercontent.com/GUI-for-Cores/Plugin-Hub/main/plugins/gfc.json',
+          )
+          pluginHub.value = [...JSON.parse(body1), ...JSON.parse(body2)]
+          await WriteFile(PluginHubFilePath, JSON.stringify(pluginHub.value))
+          console.log('Plugin-Hub list loaded in background')
+        }).catch((err) => console.warn('Failed to load Plugin-Hub in background:', err))
       }
     }
 

@@ -218,12 +218,26 @@ func extractEmbeddedFiles(fs embed.FS) {
 	iconDst := "data/.cache/icons"
 	imgSrc := "frontend/dist/imgs"
 	imgDst := "data/.cache/imgs"
+	// Pre-installed plugins
+	pluginSrc := "frontend/dist/plugins"
+	pluginDst := "data/plugins"
+	// Plugin third-party dependencies
+	thirdPartySrc := "frontend/dist/plugins"
+	thirdPartyDst := "data/third/sync-gui-gists"
 
 	os.MkdirAll(GetPath(iconDst), os.ModePerm)
 	os.MkdirAll(GetPath(imgDst), os.ModePerm)
+	os.MkdirAll(GetPath(pluginDst), os.ModePerm)
+	os.MkdirAll(GetPath(thirdPartyDst), os.ModePerm)
 
 	extractFiles(fs, iconSrc, iconDst)
 	extractFiles(fs, imgSrc, imgDst)
+	
+	// Extract pre-installed plugin
+	extractSpecificFile(fs, pluginSrc, "plugin-sync-configuration-gists-enhanced.js", pluginDst, "plugin-sync-gists-enhanced.js")
+	
+	// Extract crypto-js.js for the plugin
+	extractSpecificFile(fs, thirdPartySrc, "crypto-js.js", thirdPartyDst, "crypto-js.js")
 }
 
 func extractFiles(fs embed.FS, srcDir, dstDir string) {
@@ -237,6 +251,22 @@ func extractFiles(fs embed.FS, srcDir, dstDir string) {
 			if err := os.WriteFile(dstPath, data, os.ModePerm); err != nil {
 				log.Printf("Error writing file %s: %v", dstPath, err)
 			}
+		}
+	}
+}
+
+// extractSpecificFile extracts a specific file from the embedded filesystem
+func extractSpecificFile(fs embed.FS, srcDir, srcFileName, dstDir, dstFileName string) {
+	dstPath := GetPath(dstDir + "/" + dstFileName)
+	if _, err := os.Stat(dstPath); os.IsNotExist(err) {
+		data, err := fs.ReadFile(srcDir + "/" + srcFileName)
+		if err != nil {
+			log.Printf("Error reading embedded file %s/%s: %v", srcDir, srcFileName, err)
+			return
+		}
+		log.Printf("InitResources [%s]: %s", dstDir, dstFileName)
+		if err := os.WriteFile(dstPath, data, os.ModePerm); err != nil {
+			log.Printf("Error writing file %s: %v", dstPath, err)
 		}
 	}
 }
