@@ -39,14 +39,28 @@ jobs:
             if [ ! -z "$INPUT_VER" ]; then
               echo "VERSION=$INPUT_VER" >> $GITHUB_ENV
             else
-              LATEST_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 2>/dev/null || echo "v0.0.0")
+              # Get the highest version tag by sorting all tags
+              LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
+              if [ -z "$LATEST_TAG" ]; then
+                LATEST_TAG="v0.0.0"
+              fi
+              echo "Found latest tag: $LATEST_TAG"
               VERSION_NO_V=${LATEST_TAG#v}
               IFS='.' read -r -a PARTS <<< "$VERSION_NO_V"
               MAJOR=${PARTS[0]}
               MINOR=${PARTS[1]}
               PATCH=${PARTS[2]}
-              NEW_PATCH=$((PATCH + 1))
-              NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
+              # Increment and check if tag exists
+              while true; do
+                NEW_PATCH=$((PATCH + 1))
+                NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
+                if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+                  echo "Tag $NEW_TAG already exists, trying next..."
+                  PATCH=$NEW_PATCH
+                else
+                  break
+                fi
+              done
               echo "VERSION=$NEW_TAG" >> $GITHUB_ENV
             fi
           fi
@@ -92,13 +106,28 @@ jobs:
             if ($inputVer) {
               "VERSION=$inputVer" | Out-File -FilePath $env:GITHUB_ENV -Append
             } else {
-              # Auto-increment patch version
-              $latestTag = git describe --tags --match "v[0-9]*" --abbrev=0 2>$null
-              if (-not $latestTag) { $latestTag = "v0.0.0" }
-              $versionParts = $latestTag.Substring(1) -split '\.' 
-              $newPatch = [int]$versionParts[2] + 1
-              $newTag = "v$($versionParts[0]).$($versionParts[1]).$newPatch"
-              Write-Host "Auto-incremented version from $latestTag to $newTag"
+              # Get the highest version tag by sorting all tags
+              $allTags = git tag -l "v*.*.*" | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' }
+              if ($allTags) {
+                $latestTag = $allTags | Sort-Object { [version]($_ -replace '^v', '') } | Select-Object -Last 1
+              } else {
+                $latestTag = "v0.0.0"
+              }
+              Write-Host "Found latest tag: $latestTag"
+              $versionParts = $latestTag.Substring(1) -split '\.'
+              $major = $versionParts[0]
+              $minor = $versionParts[1]
+              $patch = [int]$versionParts[2]
+              # Increment and check if tag exists
+              do {
+                $patch++
+                $newTag = "v$major.$minor.$patch"
+                $tagExists = git rev-parse $newTag 2>$null
+                if ($tagExists) {
+                  Write-Host "Tag $newTag already exists, trying next..."
+                }
+              } while ($tagExists)
+              Write-Host "Auto-incremented version to $newTag"
               "VERSION=$newTag" | Out-File -FilePath $env:GITHUB_ENV -Append
             }
           }
@@ -163,16 +192,29 @@ jobs:
             if [ ! -z "$INPUT_VER" ]; then
               echo "VERSION=$INPUT_VER" >> $GITHUB_ENV
             else
-              # Auto-increment patch version
-              LATEST_TAG=$(git describe --tags --match "v[0-9]*" --abbrev=0 2>/dev/null || echo "v0.0.0")
+              # Get the highest version tag by sorting all tags
+              LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
+              if [ -z "$LATEST_TAG" ]; then
+                LATEST_TAG="v0.0.0"
+              fi
+              echo "Found latest tag: $LATEST_TAG"
               VERSION_NO_V=${LATEST_TAG#v}
               IFS='.' read -r -a PARTS <<< "$VERSION_NO_V"
               MAJOR=${PARTS[0]}
               MINOR=${PARTS[1]}
               PATCH=${PARTS[2]}
-              NEW_PATCH=$((PATCH + 1))
-              NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
-              echo "Auto-incremented version from $LATEST_TAG to $NEW_TAG"
+              # Increment and check if tag exists
+              while true; do
+                NEW_PATCH=$((PATCH + 1))
+                NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
+                if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+                  echo "Tag $NEW_TAG already exists, trying next..."
+                  PATCH=$NEW_PATCH
+                else
+                  break
+                fi
+              done
+              echo "Auto-incremented version to $NEW_TAG"
               echo "VERSION=$NEW_TAG" >> $GITHUB_ENV
             fi
           fi
