@@ -259,8 +259,11 @@ const generateRuleProviders = async (
     }
   }
 
+  // Process all RULE-SET rules (including disabled ones) to generate rule-providers.
+  // Disabled rules won't generate routing rules, but their providers are still needed
+  // for DNS features like fake-ip-filter and nameserver-policy.
   rules
-    .filter((rule) => rule.type === 'RULE-SET' && rule.enable)
+    .filter((rule) => rule.type === 'RULE-SET')
     .forEach((rule) => {
       if (rule['ruleset-type'] === 'file') {
         appendLocalProvider(rule.payload)

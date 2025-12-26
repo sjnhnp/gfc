@@ -273,13 +273,12 @@ export const restoreProfile = (
       return // Provider not defined
     }
 
-    // Add a disabled RULE-SET entry so that rule-providers will be generated
-    // We use enable: true but the rule won't actually route traffic since it uses 'DIRECT'
-    // This ensures the rule-provider is generated for DNS use
+    // Add a RULE-SET entry with enable: false
+    // This ensures the rule-provider is generated for DNS use, but no routing rule is created
     profile.rulesConfig.push({
       id: `dns-ruleset-${dnsRulesetIndex++}`,
       type: RuleType.RuleSet,
-      enable: true,
+      enable: false, // Disabled - only for rule-provider generation, not routing
       payload: provider.type === 'inline' ? stringify(provider.payload) : provider.url,
       proxy: 'DIRECT', // Default to DIRECT since this is for DNS filtering
       'no-resolve': false,
