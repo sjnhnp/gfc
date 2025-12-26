@@ -225,11 +225,22 @@ const generateRuleProviders = async (
   function appendLocalProvider(name: string) {
     const ruleset = rulesetsStore.getRulesetById(name) || rulesetsStore.getRulesetByName(name)
     if (ruleset) {
-      providers[ruleset.name] = {
-        type: 'file',
-        behavior: ruleset.behavior,
-        path: ruleset.path.replace('data/', '../'),
-        format: ruleset.format,
+      if (ruleset.type === 'Http') {
+        providers[ruleset.name] = {
+          type: 'http',
+          url: ruleset.url,
+          behavior: ruleset.behavior,
+          path: ruleset.path.replace('data/', '../'),
+          format: ruleset.format,
+          interval: 86400,
+        }
+      } else {
+        providers[ruleset.name] = {
+          type: 'file',
+          behavior: ruleset.behavior,
+          path: ruleset.path.replace('data/', '../'),
+          format: ruleset.format,
+        }
       }
     }
   }
