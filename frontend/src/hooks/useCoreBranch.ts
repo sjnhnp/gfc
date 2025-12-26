@@ -42,16 +42,7 @@ const applyGitHubProxy = (url: string, proxyUrl: string): string => {
   if (!proxyUrl) return url
   // Remove trailing slash from proxy URL
   const proxy = proxyUrl.replace(/\/$/, '')
-  // For ghproxy-style proxies, prepend the proxy URL
-  if (proxy.includes('ghproxy') || proxy.includes('gh.api') || proxy.includes('github')) {
-    return `${proxy}/${url}`
-  }
-  // For jsdelivr, convert to gh format (only works for repo files, not releases)
-  if (proxy.includes('jsdelivr')) {
-    // jsdelivr doesn't support release assets, fall back to ghproxy style
-    return `${proxy}/${url}`
-  }
-  // Default: prepend proxy URL
+  // Prepend proxy URL to the original URL
   return `${proxy}/${url}`
 }
 

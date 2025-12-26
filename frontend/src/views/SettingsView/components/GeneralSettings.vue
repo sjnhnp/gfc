@@ -405,7 +405,7 @@ if (envStore.env.os === 'windows') {
         </div>
         <Input
           v-model.lazy="appSettings.app.githubProxy"
-          :placeholder="'https://mirror.ghproxy.com'"
+          :placeholder="'https://ghfast.top'"
           editable
           class="text-14 min-w-256"
         >
