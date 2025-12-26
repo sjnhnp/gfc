@@ -224,8 +224,16 @@ const generateRuleProviders = async (
   const providers: Record<string, any> = {}
 
   function appendLocalProvider(name: string) {
-    // If already defined in mixin rule-providers, skip - mixin will provide it
+    // If already defined in providers (generated or copied), skip
+    if (providers[name]) {
+      return
+    }
+
+    // If defined in mixin rule-providers, copy it to ensure it's available
+    // This is needed because mixin is merged later, but mihomo validates
+    // rule-set references in fake-ip-filter/nameserver-policy against rule-providers
     if (mixinRuleProviders[name]) {
+      providers[name] = mixinRuleProviders[name]
       return
     }
 
