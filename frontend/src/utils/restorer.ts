@@ -235,6 +235,7 @@ export const restoreProfile = (
 
   // Extract rule-set references from fake-ip-filter and nameserver-policy
   // These rule-sets need to be included in rule-providers even if not used in rules
+  // Store them separately in dnsRuleProviders so they don't pollute the rules GUI
   const ruleProviders = config['rule-providers'] || {}
   const usedRulesets = new Set(
     profile.rulesConfig
@@ -261,11 +262,11 @@ export const restoreProfile = (
   // Combine and dedupe
   const dnsReferenceRulesets = Array.from(new Set([...fakeIpRulesets, ...nameserverPolicyRulesets]))
 
-  // Add rule-sets to rulesConfig if they exist in rule-providers but not in rules
-  let dnsRulesetIndex = 90000 // Use high index to avoid conflict
+  // Store DNS-only rule providers separately (not in rulesConfig)
+  const dnsRuleProviders: Record<string, any> = {}
   dnsReferenceRulesets.forEach((rulesetName) => {
     if (usedRulesets.has(rulesetName)) {
-      return // Already in rulesConfig
+      return // Already in rulesConfig, no need to store separately
     }
 
     const provider = ruleProviders[rulesetName]
@@ -273,23 +274,21 @@ export const restoreProfile = (
       return // Provider not defined
     }
 
-    // Add a RULE-SET entry with enable: false
-    // This ensures the rule-provider is generated for DNS use, but no routing rule is created
-    profile.rulesConfig.push({
-      id: `dns-ruleset-${dnsRulesetIndex++}`,
-      type: RuleType.RuleSet,
-      enable: false, // Disabled - only for rule-provider generation, not routing
-      payload: provider.type === 'inline' ? stringify(provider.payload) : provider.url,
-      proxy: 'DIRECT', // Default to DIRECT since this is for DNS filtering
-      'no-resolve': false,
-      'ruleset-behavior': provider.behavior,
-      'ruleset-format': provider.format || RulesetFormat.Yaml,
-      'ruleset-type': provider.type || 'http',
-      'ruleset-name': rulesetName,
-      'ruleset-proxy': 'DIRECT',
-      'ruleset-interval': parseInt(provider.interval) || 86400,
-    })
+    // Store the provider definition for DNS use
+    dnsRuleProviders[rulesetName] = {
+      type: provider.type || 'http',
+      behavior: provider.behavior,
+      format: provider.format,
+      url: provider.url,
+      path: provider.path,
+      interval: parseInt(provider.interval) || 86400,
+      payload: provider.payload,
+    }
   })
+
+  if (Object.keys(dnsRuleProviders).length > 0) {
+    profile.dnsRuleProviders = dnsRuleProviders
+  }
 
   return profile
 }

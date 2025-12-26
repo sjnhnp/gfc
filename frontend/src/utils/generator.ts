@@ -219,6 +219,7 @@ const generateRuleProviders = async (
   rules: ProfileType['rulesConfig'],
   proxyGruoups: ProfileType['proxyGroupsConfig'],
   mixinRuleProviders: Record<string, any> = {},
+  dnsRuleProviders: ProfileType['dnsRuleProviders'] = {},
 ) => {
   const rulesetsStore = useRulesetsStore()
   const providers: Record<string, any> = {}
@@ -234,6 +235,28 @@ const generateRuleProviders = async (
     // rule-set references in fake-ip-filter/nameserver-policy against rule-providers
     if (mixinRuleProviders[name]) {
       providers[name] = mixinRuleProviders[name]
+      return
+    }
+
+    // If defined in DNS-only rule providers (from subscription restore)
+    if (dnsRuleProviders && dnsRuleProviders[name]) {
+      const p = dnsRuleProviders[name]
+      if (p.type === 'inline') {
+        providers[name] = {
+          type: 'inline',
+          behavior: p.behavior,
+          payload: p.payload,
+        }
+      } else {
+        providers[name] = {
+          type: p.type || 'http',
+          url: p.url,
+          behavior: p.behavior,
+          format: p.format,
+          path: p.path,
+          interval: p.interval || 86400,
+        }
+      }
       return
     }
 
@@ -259,11 +282,9 @@ const generateRuleProviders = async (
     }
   }
 
-  // Process all RULE-SET rules (including disabled ones) to generate rule-providers.
-  // Disabled rules won't generate routing rules, but their providers are still needed
-  // for DNS features like fake-ip-filter and nameserver-policy.
+  // Process enabled RULE-SET rules to generate rule-providers
   rules
-    .filter((rule) => rule.type === 'RULE-SET')
+    .filter((rule) => rule.type === 'RULE-SET' && rule.enable)
     .forEach((rule) => {
       if (rule['ruleset-type'] === 'file') {
         appendLocalProvider(rule.payload)
@@ -424,6 +445,7 @@ export const generateConfig = async (originalProfile: ProfileType) => {
     profile.rulesConfig,
     profile.proxyGroupsConfig,
     mixinRuleProviders,
+    profile.dnsRuleProviders,
   )
 
   config['proxies'] = await generateProxies(profile.proxyGroupsConfig)

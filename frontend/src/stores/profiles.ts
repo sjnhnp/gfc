@@ -143,6 +143,17 @@ export type ProfileType = {
     code: string
   }
   subRulesConfig: Record<string, string[]>
+  // Rule providers used only by DNS features (fake-ip-filter, nameserver-policy)
+  // These are not shown in the rules GUI but are needed for rule-provider generation
+  dnsRuleProviders?: Record<string, {
+    type: string
+    behavior: string
+    format?: string
+    url?: string
+    path?: string
+    interval?: number
+    payload?: any
+  }>
 }
 
 export const useProfilesStore = defineStore('profiles', () => {
