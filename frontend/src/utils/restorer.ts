@@ -207,9 +207,9 @@ export const restoreProfile = (
           return
         }
 
-        if (type === RuleType.Geoip || type === RuleType.Geosite) {
-          isGeoModeEnabled = true
-        }
+        // if (type === RuleType.Geoip || type === RuleType.Geosite) {
+        //   isGeoModeEnabled = true
+        // }
 
         profile.rulesConfig.push({
           id: index.toString(),
@@ -231,7 +231,7 @@ export const restoreProfile = (
     }
   })
 
-  profile.advancedConfig['geodata-mode'] = isGeoModeEnabled
+  // profile.advancedConfig['geodata-mode'] = isGeoModeEnabled
 
   return profile
 }

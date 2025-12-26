@@ -142,16 +142,7 @@ const hasLost = (r: ProfileType['rulesConfig'][0]) => {
   return !props.profile.proxyGroupsConfig.find((v) => v.id === r.proxy)
 }
 
-const notSupport = (r: ProfileType['rulesConfig'][0]) => {
-  return (
-    !props.profile.advancedConfig['geodata-mode'] &&
-    [RuleType.Geoip, RuleType.Geosite].includes(r.type)
-  )
-}
 
-const showNotSupport = () => message.warn('kernel.rules.needGeodataMode')
-
-const showLost = () => message.warn('kernel.rules.notFound')
 </script>
 
 <template>
@@ -182,9 +173,6 @@ const showLost = () => message.warn('kernel.rules.notFound')
         <Switch v-model="r.enable" size="small" border="square" />
         <div class="font-bold">
           <span v-if="hasLost(r)" @click="showLost" class="warn cursor-pointer"> [ ! ] </span>
-          <span v-if="notSupport(r)" @click="showNotSupport" class="warn cursor-pointer">
-            [ ! ]
-          </span>
           {{ generateRule(r, profile.proxyGroupsConfig) }}
         </div>
         <div class="ml-auto">
