@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, shallowRef, triggerRef, computed, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { deleteConnection } from '@/api/kernel'
@@ -7,7 +7,7 @@ import { DraggableOptions } from '@/constant/app'
 import { DefaultConnections } from '@/constant/kernel'
 import { useBool } from '@/hooks'
 import { useAppSettingsStore, useKernelApiStore } from '@/stores'
-import { formatBytes, formatRelativeTime, addToRuleSet, message, picker } from '@/utils'
+import { formatBytes, formatRelativeTime, addToRuleSet, message, picker, throttle } from '@/utils'
 
 import { type PickerItem } from '@/components/Picker/index.vue'
 
@@ -245,8 +245,9 @@ const menu: Menu[] = [
 const details = ref()
 const isActive = ref(true)
 const keywords = ref('')
-const dataSource = ref<(CoreApiConnectionsData['connections'][0] & TrafficCacheType)[]>([])
-const disconnectedData = ref<CoreApiConnectionsData['connections']>([])
+// Use shallowRef for better performance with large datasets
+const dataSource = shallowRef<(CoreApiConnectionsData['connections'][0] & TrafficCacheType)[]>([])
+const disconnectedData = shallowRef<CoreApiConnectionsData['connections']>([])
 const [showDetails, toggleDetails] = useBool(false)
 const [showSettings, toggleSettings] = useBool(false)
 const [isPause, togglePause] = useBool(false)
@@ -285,18 +286,24 @@ const handleResetConnections = () => {
   message.success('common.success')
 }
 
-const unregisterConnectionsHandler = kernelApiStore.onConnections((data) => {
+// Throttle WebSocket data updates for better performance (max 2 updates per second)
+const handleConnectionsUpdate = throttle((data: CoreApiConnectionsData) => {
   if (isPause.value) return
   const connections = data.connections || []
 
+  // Record disconnected connections
+  const disconnected: CoreApiConnectionsData['connections'] = []
   dataSource.value.forEach((connection) => {
-    // Record Disconnected Connections
     const exist = connections.some((v) => v.id === connection.id)
-    !exist && disconnectedData.value.push(connection)
+    if (!exist) disconnected.push(connection)
   })
+  if (disconnected.length > 0) {
+    disconnectedData.value = [...disconnectedData.value, ...disconnected]
+    triggerRef(disconnectedData)
+  }
 
+  // Update active connections with traffic info
   dataSource.value = connections.map((connection) => {
-    // Record Previous Traffic Information
     const result = { ...connection, up: 0, down: 0 }
     const cache = TrafficCache[connection.id]
     result.up = cache?.up || connection.upload
@@ -307,7 +314,10 @@ const unregisterConnectionsHandler = kernelApiStore.onConnections((data) => {
     }
     return result
   })
-})
+  triggerRef(dataSource)
+}, 500)
+
+const unregisterConnectionsHandler = kernelApiStore.onConnections(handleConnectionsUpdate)
 
 onUnmounted(() => {
   unregisterConnectionsHandler()
