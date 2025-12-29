@@ -244,12 +244,20 @@ export const restoreProfile = (
   )
 
   // Extract rule-set names from fake-ip-filter
+  // Support both old format (rule-set:xxx) and new rule mode format (RULE-SET,xxx,fake-ip/real-ip)
   const fakeIpFilter = profile.dnsConfig['fake-ip-filter'] || []
-  const fakeIpRulesets = fakeIpFilter.flatMap((v: string) =>
-    v.startsWith('rule-set:')
-      ? v.substring(9).split(',').map(x => x.trim())
-      : []
-  )
+  const fakeIpRulesets = fakeIpFilter.flatMap((v: string) => {
+    // Old format: rule-set:name1,name2
+    if (v.startsWith('rule-set:')) {
+      return v.substring(9).split(',').map(x => x.trim())
+    }
+    // New rule mode format: RULE-SET,name,fake-ip or RULE-SET,name,real-ip
+    const ruleSetMatch = v.match(/^RULE-SET,([^,]+),(?:fake-ip|real-ip)$/i)
+    if (ruleSetMatch) {
+      return [ruleSetMatch[1].trim()]
+    }
+    return []
+  })
 
   // Extract rule-set names from nameserver-policy
   const nameserverPolicy = profile.dnsConfig['nameserver-policy'] || {}

@@ -311,14 +311,19 @@ const generateRuleProviders = async (
     })
 
   // Extract rule-set references from GUI's DNS config
-  const l1 = (dns['fake-ip-filter'] || []).flatMap((v: string) =>
-    v.startsWith('rule-set:')
-      ? v
-        .substring(9)
-        .split(',')
-        .map((v) => v.trim())
-      : [],
-  )
+  // Support both old format (rule-set:xxx) and new rule mode format (RULE-SET,xxx,fake-ip/real-ip)
+  const l1 = (dns['fake-ip-filter'] || []).flatMap((v: string) => {
+    // Old format: rule-set:name1,name2
+    if (v.startsWith('rule-set:')) {
+      return v.substring(9).split(',').map((x) => x.trim())
+    }
+    // New rule mode format: RULE-SET,name,fake-ip or RULE-SET,name,real-ip
+    const ruleSetMatch = v.match(/^RULE-SET,([^,]+),(?:fake-ip|real-ip)$/i)
+    if (ruleSetMatch) {
+      return [ruleSetMatch[1].trim()]
+    }
+    return []
+  })
   const l2 = Object.keys(dns['nameserver-policy'] || {}).flatMap((key) =>
     key.startsWith('rule-set:')
       ? key
@@ -330,14 +335,18 @@ const generateRuleProviders = async (
 
   // Also extract rule-set references from mixin's DNS config
   const mixinDns = (mixinRuleProviders as any).__mixinDns || {}
-  const l3 = (mixinDns['fake-ip-filter'] || []).flatMap((v: string) =>
-    v.startsWith('rule-set:')
-      ? v
-        .substring(9)
-        .split(',')
-        .map((v) => v.trim())
-      : [],
-  )
+  const l3 = (mixinDns['fake-ip-filter'] || []).flatMap((v: string) => {
+    // Old format: rule-set:name1,name2
+    if (v.startsWith('rule-set:')) {
+      return v.substring(9).split(',').map((x) => x.trim())
+    }
+    // New rule mode format: RULE-SET,name,fake-ip or RULE-SET,name,real-ip
+    const ruleSetMatch = v.match(/^RULE-SET,([^,]+),(?:fake-ip|real-ip)$/i)
+    if (ruleSetMatch) {
+      return [ruleSetMatch[1].trim()]
+    }
+    return []
+  })
   const l4 = Object.keys(mixinDns['nameserver-policy'] || {}).flatMap((key) =>
     key.startsWith('rule-set:')
       ? key
@@ -420,15 +429,16 @@ export const generateConfig = async (originalProfile: ProfileType) => {
     }
   })
 
+  // Process fake-ip-filter: expand old format rule-set references, keep rule mode syntax as-is
   if (config.dns['fake-ip-filter']) {
-    config.dns['fake-ip-filter'] = config.dns['fake-ip-filter'].flatMap((v: string) =>
-      v.startsWith('rule-set:')
-        ? v
-          .substring(9)
-          .split(',')
-          .map((x) => `rule-set:${x.trim()}`)
-        : [v],
-    )
+    config.dns['fake-ip-filter'] = config.dns['fake-ip-filter'].flatMap((v: string) => {
+      // Old format: rule-set:name1,name2 -> [rule-set:name1, rule-set:name2]
+      if (v.startsWith('rule-set:')) {
+        return v.substring(9).split(',').map((x) => `rule-set:${x.trim()}`)
+      }
+      // Rule mode syntax (DOMAIN,xxx,fake-ip etc.) - keep as-is
+      return [v]
+    })
   }
 
   config['proxy-providers'] = await generateProxyProviders(profile.proxyGroupsConfig)
