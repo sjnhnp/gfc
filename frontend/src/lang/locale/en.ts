@@ -624,7 +624,7 @@ export default {
     addGroupToMenu: 'Add proxy group to tray menu',
     multipleInstance: 'Allow multiple app instances',
     rollingRelease: 'Enable Rolling Release',
-    debugOutline: 'Show interface outline',
+    debugOutline: 'Show component outlines',
     debugNoAnimation: 'Disable animations',
     debugNoRounded: 'Disable rounded corners',
     debugBorder: 'Show window border',
