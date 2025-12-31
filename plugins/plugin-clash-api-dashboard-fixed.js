@@ -27,16 +27,24 @@ const getClashApiConfig = () => {
     const appSettingsStore = Plugins.useAppSettingsStore()
     const profilesStore = Plugins.useProfilesStore()
     const profile = profilesStore.getProfileById(appSettingsStore.app.kernel.profile)
+
+    // 默认值
     let port = 20123
     let secret = ''
+
+    // 如果没有选择配置文件，返回默认值
+    if (!profile) {
+        return { port, secret }
+    }
+
     if (Plugins.APP_TITLE.includes('SingBox')) {
-        const controller = profile.experimental.clash_api.external_controller || '127.0.0.1:20123'
+        const controller = profile.experimental?.clash_api?.external_controller || '127.0.0.1:20123'
         port = controller.split(':')[1]
-        secret = profile.experimental.clash_api.secret || ''
+        secret = profile.experimental?.clash_api?.secret || ''
     } else {
-        const controller = profile.advancedConfig['external-controller'] || '127.0.0.1:20113'
+        const controller = profile.advancedConfig?.['external-controller'] || '127.0.0.1:20113'
         port = controller.split(':')[1]
-        secret = profile.advancedConfig.secret || ''
+        secret = profile.advancedConfig?.secret || ''
     }
     return { port, secret }
 }
