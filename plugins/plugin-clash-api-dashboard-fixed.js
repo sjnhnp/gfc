@@ -217,30 +217,17 @@ const onCoreStopped = () => {
 
 /* 触发器 配置更改后 (修复版新增) */
 const onConfigure = async (config, old) => {
-    // 使用弹窗显示调试信息
-    const debugInfo = `onConfigure called\nconfig: ${JSON.stringify(config)}\nold: ${JSON.stringify(old)}`
-    Plugins.Notify('Dashboard Plugin Debug', debugInfo)
-
     const kernelApiStore = Plugins.useKernelApiStore()
-
-    if (!kernelApiStore.running) {
-        Plugins.Notify('Dashboard Plugin', 'Kernel not running, skip')
-        return
-    }
+    if (!kernelApiStore.running) return
 
     // 检查是否有配置变化
     const dashboardChanged = config.DashboardName !== old.DashboardName
     const clashModeChanged = config.ClashModeAction !== old.ClashModeAction
 
-    console.log('[Dashboard Plugin] dashboardChanged:', dashboardChanged)
-    console.log('[Dashboard Plugin] clashModeChanged:', clashModeChanged)
-
     if (dashboardChanged || clashModeChanged) {
-        // 重启内核以应用新的配置（这是最可靠的方式）
-        console.log('[Dashboard Plugin] restarting kernel...')
+        // 重启内核以应用新的配置
         try {
             await kernelApiStore.restartCore()
-            console.log('[Dashboard Plugin] kernel restarted')
         } catch (error) {
             console.error('[Dashboard Plugin] Failed to restart kernel:', error)
             // 如果重启失败，尝试手动刷新组件
@@ -255,8 +242,6 @@ const onConfigure = async (config, old) => {
                 }
             }
         }
-    } else {
-        console.log('[Dashboard Plugin] no changes detected')
     }
 }
 

@@ -25,7 +25,8 @@ const pluginConfigRef = useTemplateRef('pluginConfigRef')
 
 const loading = ref(false)
 const settings = ref(appSettingsStore.app.pluginSettings[props.plugin.id] ?? {})
-const oldSettings = settings.value
+// Use deep clone to preserve original values (settings.value is reactive and will change)
+const oldSettings = JSON.parse(JSON.stringify(settings.value))
 const originalSettings = props.plugin.configuration.reduce((p, { key, value }) => {
   p[key] = value
   return p
