@@ -114,8 +114,21 @@ const handleShowSubForm = (id?: string) => {
 
 const handleUpdateSubs = async () => {
   try {
-    await subscribeStore.updateSubscribes()
-    message.success('common.success')
+    const results = await subscribeStore.updateSubscribes()
+    const failed = results.filter((r) => !r.ok)
+    if (failed.length === 0) {
+      message.success('common.success')
+    } else if (failed.length === results.length) {
+      // All failed
+      message.error(failed.map((r) => r.result).join('\n'), 5000)
+    } else {
+      // Partial success
+      const successCount = results.length - failed.length
+      message.warn(
+        `${successCount}/${results.length} ${t('common.success')}\n${failed.map((r) => r.result).join('\n')}`,
+        5000,
+      )
+    }
   } catch (error: any) {
     console.error('updateSubscribes: ', error)
     message.error(error)

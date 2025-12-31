@@ -73,7 +73,11 @@ description: 合并上游 GUI.for.Clash 项目的更新，同时保留所有自�
     - Gist 插件识别: `frontend/public/plugins/plugin-sync-configuration-gists-enhanced.js`
     - 构建输出文件名: `.github/workflows/release.yml`
 
-11. **其他自定义**
+11. **订阅更新全部错误提示改进**
+    - 文件: `frontend/src/stores/subscribes.ts` (返回所有结果含失败信息)
+    - 文件: `frontend/src/views/SubscribesView/index.vue` (显示失败的订阅错误)
+
+12. **其他自定义**
     - 关于页面版本号修改: `frontend/src/views/AboutView.vue`
     - Go 后端修改: `bridge/bridge.go`, `bridge/io.go`
     - Windows 管理员权限: `build/windows/wails.exe.manifest`

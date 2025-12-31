@@ -253,7 +253,7 @@ export const useSubscribesStore = defineStore('subscribes', () => {
       return result
     }
 
-    const result = await asyncPool(
+    const results = await asyncPool(
       5,
       subscribes.value.filter((v) => !v.disabled),
       update,
@@ -263,7 +263,8 @@ export const useSubscribesStore = defineStore('subscribes', () => {
 
     eventBus.emit('subscriptionsChange', undefined)
 
-    return result.flatMap((v) => (v.ok && v.value) || [])
+    // Return all results with ok status for caller to handle
+    return results.flatMap((v) => (v.ok ? [v.value] : []))
   }
 
   const getSubscribeById = (id: string) => subscribes.value.find((v) => v.id === id)
