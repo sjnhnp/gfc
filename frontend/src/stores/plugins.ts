@@ -302,6 +302,13 @@ export const usePluginsStore = defineStore('plugins', () => {
       }
       throw error
     }
+
+    // Try to call onInstall after adding (to initialize UI components like custom actions)
+    try {
+      await manualTrigger(plugin.id, PluginTriggerEvent.OnInstall)
+    } catch {
+      // Ignore errors if onInstall is not defined or fails
+    }
   }
 
   const deletePlugin = async (id: string) => {
