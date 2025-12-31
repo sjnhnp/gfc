@@ -207,40 +207,50 @@ const onCoreStopped = () => {
     removeFromCoreStatePanel()
 }
 
-/* 触发器 配置更改后 (修复版新增) */
+/* 触发器 Configure */
 const onConfigure = (config, old) => {
     const kernelApiStore = Plugins.useKernelApiStore()
-    if (!kernelApiStore.running) return
+    // 只要内核在运行，就更新 UI，移除 old 对比以确保一定更新
+    if (kernelApiStore.running) {
+        // 先移除旧的（如果存在）
+        removeFromCoreStatePanel()
 
-    // DashboardName 改变时更新 WebUI 按钮
-    if (config.DashboardName !== old.DashboardName) {
-        loadWebUIComponent(config.DashboardName)
-    }
+        // 稍微延迟一下确保移除操作完成
+        setTimeout(() => {
+            // 重新添加 WebUI 组件
+            loadWebUIComponent(config.DashboardName)
 
-    // ClashModeAction 改变时更新模式切换按钮
-    if (config.ClashModeAction !== old.ClashModeAction) {
-        if (config.ClashModeAction) {
-            loadClashModeComponent()
-        } else {
-            window[Plugin.id].removeClashMode?.()
-        }
+            // 重新添加或移除 Mode 组件
+            if (config.ClashModeAction) {
+                loadClashModeComponent()
+            }
+        }, 100)
     }
 }
 
-/* 触发器 安装后 (修复版新增) */
+/* 触发器 Install */
 const onInstall = () => {
-    // 安装后，如果内核正在运行，立即加载组件
     const kernelApiStore = Plugins.useKernelApiStore()
     if (kernelApiStore.running) {
         addToCoreStatePanel()
     }
 }
 
-/* 触发器 卸载前 (修复版新增) */
+/* 触发器 Uninstall */
 const onUninstall = () => {
-    // 卸载时清理所有组件
     removeFromCoreStatePanel()
-    // 清理 window 上的引用
     delete window[Plugin.id]
+}
+
+/* 触发器 Ready (APP就绪) - 修复重启后不显示的问题 */
+const onReady = () => {
+    // APP 就绪时，检查内核是否已经在运行（如自动启动的情况）
+    // 延迟 1s 确保 Store 和 UI 状态已完全初始化
+    setTimeout(() => {
+        const kernelApiStore = Plugins.useKernelApiStore()
+        if (kernelApiStore.running) {
+            addToCoreStatePanel()
+        }
+    }, 1000)
 }
 
