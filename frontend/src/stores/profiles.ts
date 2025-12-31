@@ -164,7 +164,10 @@ export const useProfilesStore = defineStore('profiles', () => {
 
   const setupProfiles = async () => {
     const data = await ignoredError(ReadFile, ProfilesFilePath)
-    data && (profiles.value = parse(data))
+    if (data) {
+      const parsed = parse(data)
+      profiles.value = Array.isArray(parsed) ? parsed : []
+    }
 
     await migrateProfiles(profiles.value, saveProfiles)
   }

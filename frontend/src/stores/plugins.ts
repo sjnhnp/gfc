@@ -135,7 +135,10 @@ export const usePluginsStore = defineStore('plugins', () => {
 
   const setupPlugins = async () => {
     const data = await ignoredError(ReadFile, PluginsFilePath)
-    data && (plugins.value = parse(data))
+    if (data) {
+      const parsed = parse(data)
+      plugins.value = Array.isArray(parsed) ? parsed : []
+    }
 
     const list = await ignoredError(ReadFile, PluginHubFilePath)
     list && (pluginHub.value = JSON.parse(list))

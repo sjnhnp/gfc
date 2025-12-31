@@ -26,11 +26,15 @@ export const useSubscribesStore = defineStore('subscribes', () => {
 
   const setupSubscribes = async () => {
     const data = await ignoredError(ReadFile, SubscribesFilePath)
-    data && (subscribes.value = parse(data))
+    if (data) {
+      const parsed = parse(data)
+      subscribes.value = Array.isArray(parsed) ? parsed : []
+    }
   }
 
   const saveSubscribes = () => {
-    const s = omitArray(subscribes.value, ['updating'])
+    // Omit 'updating' (runtime state) and 'rules' (runtime-generated data, not persisted)
+    const s = omitArray(subscribes.value, ['updating', 'rules'])
     return WriteFile(SubscribesFilePath, stringifyNoFolding(s))
   }
 

@@ -42,7 +42,10 @@ export const useRulesetsStore = defineStore('rulesets', () => {
 
   const setupRulesets = async () => {
     const data = await ignoredError(ReadFile, RulesetsFilePath)
-    data && (rulesets.value = parse(data))
+    if (data) {
+      const parsed = parse(data)
+      rulesets.value = Array.isArray(parsed) ? parsed : []
+    }
 
     const list = await ignoredError(ReadFile, RulesetHubFilePath)
     list && (rulesetHub.value = JSON.parse(list))

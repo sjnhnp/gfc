@@ -17,7 +17,10 @@ export const useScheduledTasksStore = defineStore('scheduledtasks', () => {
 
   const setupScheduledTasks = async () => {
     const data = await ignoredError(ReadFile, ScheduledTasksFilePath)
-    data && (scheduledtasks.value = parse(data))
+    if (data) {
+      const parsed = parse(data)
+      scheduledtasks.value = Array.isArray(parsed) ? parsed : []
+    }
 
     scheduledtasks.value.forEach(async ({ disabled, cron, id }) => {
       if (!disabled) {
