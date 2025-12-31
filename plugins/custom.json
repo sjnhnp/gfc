@@ -73,7 +73,13 @@
     ],
     "hasUI": true,
     "menus": {},
-    "context": {},
+    "context": {
+      "profiles": {},
+      "subscriptions": {},
+      "rulesets": {},
+      "plugins": {},
+      "scheduledtasks": {}
+    },
     "status": 0,
     "configuration": [
       {
