@@ -208,7 +208,11 @@ const onReady = async () => {
 }
 
 const getPrefix = () => {
-    return Plugins.APP_TITLE.includes('Clash') ? 'GUI.for.Clash' : 'GUI.for.SingBox'
+    // Support GFC Plus, GUI.for.Clash, and GUI.for.SingBox
+    if (Plugins.APP_TITLE.includes('GFC') || Plugins.APP_TITLE.includes('Clash')) {
+        return 'GFC.Plus' // Use new prefix for GFC Plus
+    }
+    return 'GUI.for.SingBox'
 }
 
 const filterList = (list) => {

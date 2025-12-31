@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="build/appicon.png" alt="GUI.for.Clash" width="200">
-  <h1>GUI.for.Clash (Enhanced Fork)</h1>
+  <img src="build/appicon.png" alt="GFC Plus" width="200">
+  <h1>GFC Plus</h1>
   <p>基于 <a href="https://github.com/GUI-for-Cores/GUI.for.Clash">GUI-for-Cores/GUI.for.Clash</a> 的增强版 Fork</p>
   <p>A GUI program for mihomo (Clash.Meta) kernel, developed with Vue3 + Wails.</p>
 </div>

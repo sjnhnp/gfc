@@ -63,7 +63,14 @@ description: 合并上游 GUI.for.Clash 项目的更新，同时保留所有自�
 9. **版本自动递增逻辑**
    - 基于最近创建的 tag 递增: `.github/workflows/release.yml`
 
-10. **其他自定义**
+10. **GFC Plus 品牌重命名**
+    - 应用标题: `frontend/.env` (VITE_APP_TITLE)
+    - Wails 配置: `wails.json`
+    - README: `README.md`
+    - Gist 插件识别: `frontend/public/plugins/plugin-sync-configuration-gists-enhanced.js`
+    - 构建输出文件名: `.github/workflows/release.yml`
+
+11. **其他自定义**
     - 关于页面版本号修改: `frontend/src/views/AboutView.vue`
     - Go 后端修改: `bridge/bridge.go`, `bridge/io.go`
     - Windows 管理员权限: `build/windows/wails.exe.manifest`
