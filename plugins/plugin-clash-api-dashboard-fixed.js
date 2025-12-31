@@ -217,19 +217,33 @@ const onCoreStopped = () => {
 
 /* 触发器 配置更改后 (修复版新增) */
 const onConfigure = async (config, old) => {
+    console.log('[Dashboard Plugin] onConfigure called')
+    console.log('[Dashboard Plugin] config:', JSON.stringify(config))
+    console.log('[Dashboard Plugin] old:', JSON.stringify(old))
+
     const kernelApiStore = Plugins.useKernelApiStore()
-    if (!kernelApiStore.running) return
+    console.log('[Dashboard Plugin] kernel running:', kernelApiStore.running)
+
+    if (!kernelApiStore.running) {
+        console.log('[Dashboard Plugin] kernel not running, skip')
+        return
+    }
 
     // 检查是否有配置变化
     const dashboardChanged = config.DashboardName !== old.DashboardName
     const clashModeChanged = config.ClashModeAction !== old.ClashModeAction
 
+    console.log('[Dashboard Plugin] dashboardChanged:', dashboardChanged)
+    console.log('[Dashboard Plugin] clashModeChanged:', clashModeChanged)
+
     if (dashboardChanged || clashModeChanged) {
         // 重启内核以应用新的配置（这是最可靠的方式）
+        console.log('[Dashboard Plugin] restarting kernel...')
         try {
             await kernelApiStore.restartCore()
+            console.log('[Dashboard Plugin] kernel restarted')
         } catch (error) {
-            console.error('Failed to restart kernel:', error)
+            console.error('[Dashboard Plugin] Failed to restart kernel:', error)
             // 如果重启失败，尝试手动刷新组件
             if (dashboardChanged) {
                 loadWebUIComponent(config.DashboardName)
@@ -242,6 +256,8 @@ const onConfigure = async (config, old) => {
                 }
             }
         }
+    } else {
+        console.log('[Dashboard Plugin] no changes detected')
     }
 }
 
