@@ -15,6 +15,9 @@ export default defineConfig({
     },
   },
   build: {
+    // Target Safari 14 (macOS 11 Big Sur) for maximum compatibility
+    // Safari 14 doesn't support many ES2022+ features like Array.at(), Object.hasOwn()
+    target: ['es2020', 'safari14', 'chrome87', 'firefox78'],
     assetsInlineLimit: 100 * 1024, // 100KB
     chunkSizeWarningLimit: 4096, // 4MB
   },

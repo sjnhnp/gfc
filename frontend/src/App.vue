@@ -84,7 +84,9 @@ EventsOn('onSystemResume', async (resumeType: string) => {
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    const closeFn = appStore.modalStack.at(-1)
+    // Use array[length-1] instead of .at(-1) for Safari 14 compatibility (macOS 11)
+    const stack = appStore.modalStack
+    const closeFn = stack.length > 0 ? stack[stack.length - 1] : undefined
     closeFn?.()
   }
 })

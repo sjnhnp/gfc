@@ -108,7 +108,10 @@ description: 合并上游 GUI.for.Clash 项目的更新，同时保留所有自�
     - 文件: `bridge/darwin_version.go` (macOS 版本检测)
     - 文件: `main.go` (动态控制透明效果)
     - 文件: `frontend/src/assets/styles/variables.less` (不透明背景色)
-    - 说明: macOS 11.x 禁用透明效果避免黑屏，macOS 12+ 保留透明效果
+    - 文件: `frontend/vite.config.ts` (设置 build.target 为 Safari 14)
+    - 文件: `frontend/src/App.vue` (替换 Array.at() 为兼容写法)
+    - 文件: `.github/workflows/release.yml` (使用 macos-14 + MACOSX_DEPLOYMENT_TARGET=10.13)
+    - 说明: 确保前端代码兼容 Safari 14，后端二进制兼容 macOS 11
 
 17. **其他自定义**
     - 关于页面版本号修改: `frontend/src/views/AboutView.vue`
