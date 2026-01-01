@@ -91,7 +91,7 @@ func main() {
 				// Inject a CSS class for frontend compatibility (disabling animations/blur)
 				runtime.WindowExecJS(ctx, `document.body.classList.add("platform-macos-old");`)
 
-				go func() {
+					go func() {
 					// Wait a moment for the white/black screen to settle
 					time.Sleep(500 * time.Millisecond)
 
@@ -104,10 +104,6 @@ func main() {
 					
 					time.Sleep(50 * time.Millisecond)
 					runtime.WindowSetSize(ctx, width, height)
-					
-					// Another kick for good measure
-					runtime.WindowReloadApp(ctx) // Optional: might be too aggressive, let's stick to resize first
-					// Actually, resize is usually enough. keeping it simple.
 				}()
 			}
 		},
