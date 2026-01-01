@@ -40,9 +40,6 @@ func main() {
 		StartHidden:      bridge.Config.StartHidden,
 		WindowStartState: options.WindowStartState(bridge.Config.WindowStartState),
 		BackgroundColour: &options.RGBA{R: 30, G: 30, B: 30, A: 255},
-		// Disable GPU acceleration on macOS 11 and earlier to fix blank screen
-		// issues on older Intel GPUs (like MacBook 2015 with Iris Graphics)
-		WebviewGpuIsDisabled: bridge.ShouldDisableMacOSGPU(),
 		Windows: &windows.Options{
 			WebviewIsTransparent: true,
 			WindowIsTranslucent:  true,
