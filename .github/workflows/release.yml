@@ -149,9 +149,13 @@ jobs:
 
   Build-macOS:
     needs: Build-Frontend
-    runs-on: macos-latest
+    runs-on: macos-13
     env:
       APP_NAME: GFC.Plus
+      # Set deployment target to macOS 10.13 for backward compatibility with older macOS versions
+      MACOSX_DEPLOYMENT_TARGET: "10.13"
+      CGO_CFLAGS: "-mmacosx-version-min=10.13"
+      CGO_LDFLAGS: "-mmacosx-version-min=10.13"
     steps:
       - uses: actions/checkout@v4
         with:
