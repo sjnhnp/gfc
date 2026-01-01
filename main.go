@@ -84,6 +84,33 @@ func main() {
 			trayStart()
 			app.StartPowerMonitor() // Start monitoring power events (Windows only)
 		},
+		OnDomReady: func(ctx context.Context) {
+			// Workaround for macOS 11 (Big Sur) black screen/rendering issues
+			// on older Intel GPUs. We force a window resize to trigger a WebKit repaint.
+			if bridge.ShouldDisableMacOSGPU() {
+				// Inject a CSS class for frontend compatibility (disabling animations/blur)
+				runtime.WindowExecJS(ctx, `document.body.classList.add("platform-macos-old");`)
+
+				go func() {
+					// Wait a moment for the white/black screen to settle
+					time.Sleep(500 * time.Millisecond)
+
+					// Force show (in case StartHidden is true and it got stuck)
+					runtime.WindowShow(ctx)
+
+					// The "Kick": Resize window slightly to force GPU context update
+					width, height := runtime.WindowGetSize(ctx)
+					runtime.WindowSetSize(ctx, width+1, height)
+					
+					time.Sleep(50 * time.Millisecond)
+					runtime.WindowSetSize(ctx, width, height)
+					
+					// Another kick for good measure
+					runtime.WindowReloadApp(ctx) // Optional: might be too aggressive, let's stick to resize first
+					// Actually, resize is usually enough. keeping it simple.
+				}()
+			}
+		},
 		OnBeforeClose: func(ctx context.Context) (prevent bool) {
 			runtime.EventsEmit(ctx, "onBeforeExitApp")
 			return true

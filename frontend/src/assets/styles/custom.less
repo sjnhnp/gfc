@@ -1,3 +1,15 @@
+/* macOS 11 Compatibility Fix */
+.platform-macos-old * {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: var(--bg-color) !important;
+  /* Fallback for blurred backgrounds */
+  transform: translateZ(0);
+  /* Force GPU layer for everything might help compositing */
+}
+
 body[feature-outline='true'] {
   * {
     outline: 1px solid var(--color);
@@ -11,6 +23,7 @@ body[feature-no-animation='true'] {
 }
 
 body[feature-no-rounded='true'] {
+
   .rounded-2,
   .rounded-4,
   .rounded-6,
@@ -21,9 +34,11 @@ body[feature-no-rounded='true'] {
   .rounded-full {
     border-radius: 0;
   }
+
   ::-webkit-scrollbar-track {
     border-radius: 0;
   }
+
   ::-webkit-scrollbar-thumb {
     border-radius: 0;
   }
@@ -53,6 +68,7 @@ body {
   margin-top: 8px;
   overflow-y: auto;
   font-size: 12px;
+
   .grid-list-item {
     display: inline-block;
     margin: 8px;
@@ -109,6 +125,7 @@ body {
   from {
     clip-path: circle(0% at var(--x) var(--y));
   }
+
   to {
     clip-path: circle(100% at var(--x) var(--y));
   }
@@ -118,6 +135,7 @@ body {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
