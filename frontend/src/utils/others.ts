@@ -273,6 +273,55 @@ export const getTaskSchXmlString = async (delay = 30) => {
   return xml
 }
 
+// macOS LaunchAgent plist Helper
+export const getLaunchAgentPlistString = async (delay = 30) => {
+  const { appPath } = useEnvStore().env
+
+  // Note: macOS LaunchAgent doesn't have a native "delay" like Windows Task Scheduler.
+  // We use a shell script wrapper with 'sleep' to achieve the delay effect.
+  // The argument format: /bin/sh -c "sleep 30 && open /path/to/app"
+  const plist = /*xml*/ `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${APP_TITLE}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/sh</string>
+        <string>-c</string>
+        <string>sleep ${delay} &amp;&amp; "${appPath}" tasksch</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+`
+
+  return plist
+}
+
+// Linux XDG Autostart .desktop file Helper
+export const getDesktopAutostartString = async (delay = 30) => {
+  const { appPath } = useEnvStore().env
+
+  // Note: Linux autostart doesn't have a built-in delay mechanism.
+  // We use bash sleep command to achieve the delay effect.
+  const desktop = `[Desktop Entry]
+Type=Application
+Name=${APP_TITLE}
+Comment=${APP_TITLE} auto-start
+Exec=bash -c "sleep ${delay} && '${appPath}' tasksch"
+Terminal=false
+Hidden=false
+X-GNOME-Autostart-enabled=true
+`
+
+  return desktop
+}
+
 export const setIntervalImmediately = (func: () => void, interval: number) => {
   func()
   return setInterval(func, interval)

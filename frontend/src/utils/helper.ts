@@ -21,23 +21,23 @@ export const SwitchPermissions = async (enable: boolean) => {
   const { appPath } = useEnvStore().env
   const args = enable
     ? [
-        'add',
-        'HKEY_CURRENT_USER\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers',
-        '/v',
-        appPath,
-        '/t',
-        'REG_SZ',
-        '/d',
-        'RunAsAdmin',
-        '/f',
-      ]
+      'add',
+      'HKEY_CURRENT_USER\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers',
+      '/v',
+      appPath,
+      '/t',
+      'REG_SZ',
+      '/d',
+      'RunAsAdmin',
+      '/f',
+    ]
     : [
-        'delete',
-        'HKEY_CURRENT_USER\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers',
-        '/v',
-        appPath,
-        '/f',
-      ]
+      'delete',
+      'HKEY_CURRENT_USER\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers',
+      '/v',
+      appPath,
+      '/f',
+    ]
   await Exec('reg', args)
 }
 
@@ -536,6 +536,108 @@ export const CreateSchTask = async (taskName: string, xmlPath: string) => {
 
 export const DeleteSchTask = async (taskName: string) => {
   await Exec('SchTasks', ['/Delete', '/F', '/TN', taskName], { Convert: true })
+}
+
+// macOS LaunchAgent Helper
+const getLaunchAgentPath = (appName: string) => {
+  return `~/Library/LaunchAgents/${appName}.plist`
+}
+
+export const QueryLaunchAgent = async (appName: string) => {
+  const plistPath = getLaunchAgentPath(appName)
+  // Use launchctl list to check if the agent is loaded
+  const out = await Exec('launchctl', ['list', appName])
+  if (!out || out.includes('Could not find')) {
+    throw new Error('LaunchAgent not found')
+  }
+  return true
+}
+
+export const CreateLaunchAgent = async (appName: string, plistContent: string) => {
+  const plistPath = getLaunchAgentPath(appName)
+  // Expand ~ to actual home directory and write file
+  const expandedPath = await Exec('sh', ['-c', `echo ${plistPath}`])
+  const actualPath = expandedPath.trim()
+
+  // Ensure LaunchAgents directory exists
+  await Exec('sh', ['-c', 'mkdir -p ~/Library/LaunchAgents'])
+
+  // Write the plist file using sh to handle the path expansion
+  // We need to use a temporary approach - write via bridge and then move
+  const tempPath = 'data/.cache/launchagent.plist'
+  await WriteFile(tempPath, plistContent)
+  const absTempPath = await AbsolutePath(tempPath)
+
+  // Copy to LaunchAgents directory
+  await Exec('sh', ['-c', `cp "${absTempPath}" "${actualPath}"`])
+
+  // Remove temp file
+  await ignoredError(Exec, 'rm', [absTempPath])
+
+  // Load the launch agent
+  await Exec('launchctl', ['load', actualPath])
+}
+
+export const DeleteLaunchAgent = async (appName: string) => {
+  const plistPath = getLaunchAgentPath(appName)
+  const expandedPath = await Exec('sh', ['-c', `echo ${plistPath}`])
+  const actualPath = expandedPath.trim()
+
+  // Unload the launch agent first (ignore errors if not loaded)
+  await ignoredError(Exec, 'launchctl', ['unload', actualPath])
+
+  // Remove the plist file
+  await Exec('sh', ['-c', `rm -f "${actualPath}"`])
+}
+
+// Linux XDG Autostart Helper
+const getDesktopFilePath = (appName: string) => {
+  return `~/.config/autostart/${appName}.desktop`
+}
+
+export const QueryDesktopAutostart = async (appName: string) => {
+  const desktopPath = getDesktopFilePath(appName)
+  const expandedPath = await Exec('sh', ['-c', `echo ${desktopPath}`])
+  const actualPath = expandedPath.trim()
+
+  // Check if the .desktop file exists
+  const out = await Exec('sh', ['-c', `test -f "${actualPath}" && echo "exists" || echo "not found"`])
+  if (!out.includes('exists')) {
+    throw new Error('Desktop autostart file not found')
+  }
+  return true
+}
+
+export const CreateDesktopAutostart = async (appName: string, desktopContent: string) => {
+  const desktopPath = getDesktopFilePath(appName)
+  const expandedPath = await Exec('sh', ['-c', `echo ${desktopPath}`])
+  const actualPath = expandedPath.trim()
+
+  // Ensure autostart directory exists
+  await Exec('sh', ['-c', 'mkdir -p ~/.config/autostart'])
+
+  // Write the .desktop file using a temporary file
+  const tempPath = 'data/.cache/autostart.desktop'
+  await WriteFile(tempPath, desktopContent)
+  const absTempPath = await AbsolutePath(tempPath)
+
+  // Copy to autostart directory
+  await Exec('sh', ['-c', `cp "${absTempPath}" "${actualPath}"`])
+
+  // Make it executable
+  await Exec('sh', ['-c', `chmod +x "${actualPath}"`])
+
+  // Remove temp file
+  await ignoredError(Exec, 'rm', [absTempPath])
+}
+
+export const DeleteDesktopAutostart = async (appName: string) => {
+  const desktopPath = getDesktopFilePath(appName)
+  const expandedPath = await Exec('sh', ['-c', `echo ${desktopPath}`])
+  const actualPath = expandedPath.trim()
+
+  // Remove the .desktop file
+  await Exec('sh', ['-c', `rm -f "${actualPath}"`])
 }
 
 // Others

@@ -92,7 +92,19 @@ description: 合并上游 GUI.for.Clash 项目的更新，同时保留所有自�
     - 文件: `frontend/src/stores/scheduledtasks.ts` (YAML 解析空值保护)
     - 说明: 确保老版本数据文件升级时不会因为空值导致页面空白
 
-14. **其他自定义**
+14. **跨平台开机自启动支持**
+    - 文件: `frontend/src/views/SettingsView/components/components/BehaviorSettings.vue` (Windows/macOS/Linux 自启动支持)
+    - 文件: `frontend/src/utils/helper.ts` (LaunchAgent/XDG Autostart CRUD 操作)
+    - 文件: `frontend/src/utils/others.ts` (plist/desktop 文件生成)
+    - Windows: 任务计划程序 (Task Scheduler)
+    - macOS: LaunchAgent (~/.Library/LaunchAgents/)
+    - Linux: XDG Autostart (~/.config/autostart/)
+
+15. **Linux 构建支持**
+    - 文件: `.github/workflows/release.yml` (添加 Build-Linux job)
+    - 输出格式: tar.gz (Linux amd64)
+
+16. **其他自定义**
     - 关于页面版本号修改: `frontend/src/views/AboutView.vue`
     - Go 后端修改: `bridge/bridge.go`, `bridge/io.go`
     - Windows 管理员权限: `build/windows/wails.exe.manifest`

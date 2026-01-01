@@ -223,8 +223,81 @@ jobs:
           name: macos-builds
           path: build/bin/*.zip
 
+  Build-Linux:
+    needs: Build-Frontend
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: GFC.Plus
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for git describe to work
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: true
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+      - run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Get Version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            # Tag push: use the tag name
+            echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            # Manual trigger: use input or auto-increment
+            INPUT_VER="${{ github.event.inputs.version }}"
+            if [ ! -z "$INPUT_VER" ]; then
+              echo "VERSION=$INPUT_VER" >> $GITHUB_ENV
+            else
+              # Get the most recently created version tag (by creation date, not version number)
+              LATEST_TAG=$(git for-each-ref --sort=-creatordate --format='%(refname:short)' refs/tags | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+              if [ -z "$LATEST_TAG" ]; then
+                LATEST_TAG="v0.0.0"
+              fi
+              # Remove v prefix if present for parsing
+              VERSION_NUM=$(echo "$LATEST_TAG" | sed 's/^v//')
+              echo "Found latest tag (by date): $LATEST_TAG (version: $VERSION_NUM)"
+              IFS='.' read -r -a PARTS <<< "$VERSION_NUM"
+              MAJOR=${PARTS[0]}
+              MINOR=${PARTS[1]}
+              PATCH=${PARTS[2]}
+              # Increment patch version
+              NEW_PATCH=$((PATCH + 1))
+              NEW_TAG="v$MAJOR.$MINOR.$NEW_PATCH"
+              echo "Auto-incremented version to $NEW_TAG"
+              echo "VERSION=$NEW_TAG" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Build & Pack Linux (amd64)
+        run: |
+          export GOOS=linux GOARCH=amd64
+
+          LDFLAGS="-X 'guiforcores/bridge.Version=$VERSION'"
+          echo "==> Building Linux amd64 with version $VERSION..."
+          ~/go/bin/wails build -m -s -trimpath -skipbindings -devtools -tags webkit2_41 -ldflags "$LDFLAGS" -o $APP_NAME
+
+          cd build/bin
+          tar -czvf $APP_NAME-linux-amd64.tar.gz $APP_NAME
+          rm -f $APP_NAME
+          cd ../..
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-builds
+          path: build/bin/*.tar.gz
+
   Release:
-    needs: [Build-Windows, Build-macOS]
+    needs: [Build-Windows, Build-macOS, Build-Linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -290,7 +363,9 @@ jobs:
         with:
           tag_name: ${{ env.TAG_NAME }}
           name: ${{ env.TAG_NAME }}
-          files: release-assets/**/*.zip
+          files: |
+            release-assets/**/*.zip
+            release-assets/**/*.tar.gz
           draft: false
           prerelease: false
           body: |

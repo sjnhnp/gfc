@@ -50,11 +50,15 @@
 - **系统代理默认关闭**：避免首次启动自动设置系统代理
 - **增加自定义GitHub加速地址**：解决第一次运行无法下载内核
 
-### � 构建优化
+### 🚀 构建优化
 
-- **GitHub Actions 自动构建**：支持 Windows 和 macOS 自动构建发布
+- **GitHub Actions 自动构建**：支持 Windows、macOS 和 Linux 自动构建发布
 - **版本号自动递增**：每次发布自动递增 patch 版本号
 - **启动时间优化**：插件预打包，减少首次启动的网络请求
+- **跨平台开机自启动**：
+  - Windows: 使用任务计划程序 (Task Scheduler)
+  - macOS: 使用 LaunchAgent
+  - Linux: 使用 XDG Autostart (.desktop 文件)
 
 
 ## 📖 文档
