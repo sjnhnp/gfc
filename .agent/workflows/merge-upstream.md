@@ -111,7 +111,13 @@ description: 合并上游 GUI.for.Clash 项目的更新，同时保留所有自�
     - 文件: `frontend/src/App.vue` (替换 Array.at() 为兼容写法)
     - 说明: 最低支持 macOS 12 (Monterey)，移除了 macOS 11 兼容性代码
 
-17. **其他自定义**
+17. **Sniffer 嗅探配置保留**
+    - 文件: `frontend/src/stores/profiles.ts` (添加 snifferConfig 类型定义)
+    - 文件: `frontend/src/utils/restorer.ts` (导入订阅时解析 sniffer 字段)
+    - 文件: `frontend/src/utils/generator.ts` (生成配置时输出 sniffer 配置)
+    - 说明: 本地订阅导入（启用使用内部配置）时，sniffer 配置会被自动保留并生效
+
+18. **其他自定义**
     - 关于页面版本号修改: `frontend/src/views/AboutView.vue`
     - Go 后端修改: `bridge/bridge.go`, `bridge/io.go`
     - Windows 管理员权限: `build/windows/wails.exe.manifest`
