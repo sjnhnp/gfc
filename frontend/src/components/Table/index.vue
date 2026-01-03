@@ -28,6 +28,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   menu: () => [],
+  sort: undefined,
   rowHeight: 36,
   virtualThreshold: 100,
 })
@@ -139,7 +140,6 @@ watch(() => props.dataSource.length, updateContainerHeight)
             class="px-4 py-8 whitespace-nowrap cursor-pointer"
           >
             <div
-              @click="handleChangeSortField(column.key)"
               :style="{
                 justifyContent: { left: 'flext-start', center: 'center', right: 'flex-end' }[
                   column.align || 'left'
@@ -147,6 +147,7 @@ watch(() => props.dataSource.length, updateContainerHeight)
                 minWidth: column.minWidth || 'auto',
               }"
               class="flex items-center"
+              @click="handleChangeSortField(column.key)"
             >
               {{ t(column.title) }}
               <div v-if="sortField === column.key && sortFunc">
@@ -165,11 +166,11 @@ watch(() => props.dataSource.length, updateContainerHeight)
                 <tbody>
                   <tr
                     v-for="record in visibleData"
-                    v-menu="menu.map((v) => ({ ...v, handler: () => v.handler?.(record) }))"
                     :key="record.id"
+                    v-menu="menu.map((v) => ({ ...v, handler: () => v.handler?.(record) }))"
                     :style="{ height: `${rowHeight}px` }"
-                    class="transition duration-200"
                     :class="record.__virtualIndex % 2 === 0 ? 'virtual-row-even' : 'virtual-row-odd'"
+                    class="transition duration-200"
                   >
                     <td
                       v-for="column in tableColumns"
@@ -191,8 +192,8 @@ watch(() => props.dataSource.length, updateContainerHeight)
         <template v-else>
           <tr
             v-for="record in tableData"
-            v-menu="menu.map((v) => ({ ...v, handler: () => v.handler?.(record) }))"
             :key="record.id"
+            v-menu="menu.map((v) => ({ ...v, handler: () => v.handler?.(record) }))"
             class="transition duration-200"
           >
             <td
