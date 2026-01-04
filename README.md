@@ -61,7 +61,7 @@
   - Windows: 使用任务计划程序 (Task Scheduler)
   - macOS: 使用 LaunchAgent
   - Linux: 使用 XDG Autostart (.desktop 文件)
-- **macOS 兼容性**：支持 macOS 11 (Big Sur) 及以上版本，自动适配透明效果
+- **macOS 兼容性**：只支持 macOS 12及以上版本
 
 
 ## 📖 文档
